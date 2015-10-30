@@ -3,6 +3,7 @@ package com.boldradius.sdf.akka
 import akka.actor._
 import com.boldradius.sdf.akka.Consumer._
 import com.boldradius.sdf.akka.RealTimeSessionStats.RunStats
+import com.boldradius.sdf.chat.ChatActor
 
 import scala.concurrent.duration._
 

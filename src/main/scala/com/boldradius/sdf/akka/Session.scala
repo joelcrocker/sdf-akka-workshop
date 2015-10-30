@@ -23,7 +23,7 @@ class Session {
 }
 
 object Session {
-  val urlMap    = Map("/" -> 4, "/about" -> 2, "/store" -> 2, "/blog" -> 1, "/help" -> 1)
+  val urlMap    = Map("/" -> 4, "/about" -> 2, "/store" -> 2, "/blog" -> 1, "/help" -> 100)
   val urls      = distributedList(urlMap)
   val browsers  = distributedList(Map("chrome" -> 5, "firefox" -> 3, "ie" -> 2))
   val referrers = distributedList(Map("google" -> 8, "twitter" -> 1, "facebook" -> 2))

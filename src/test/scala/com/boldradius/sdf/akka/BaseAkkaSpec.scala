@@ -23,7 +23,6 @@ abstract class BaseAkkaSpec extends BaseSpec with BeforeAndAfterAll {
           probe.expectMsgPF(100 milliseconds) {
             case ActorIdentity(`path`, Some(ref)) =>
               actor = ref
-//            case other => println("!!!!!!!!!!!!   "+other + "  path = ")
           }
         }
         actor

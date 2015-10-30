@@ -24,6 +24,15 @@
         </encoder>
     </appender>
 
+    <appender name="chat" class="ch.qos.logback.core.FileAppender">
+        <file>${chat.log-file:-chat.log}</file>
+        <encoder>
+            <pattern>%date{HH:mm:ss} %-5level [%X{akkaSource}] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+
+
 
     <logger name="akka.actor.RepointableActorRef" level="debug" additivity="false">
         <appender-ref ref="console"/>
@@ -40,6 +49,12 @@
         <appender-ref ref="console"/>
         <appender-ref ref="email"/>
     </logger>
+
+    <logger name="com.boldradius.sdf.chat" level="debug" additivity="false">
+        <appender-ref ref="console"/>
+        <appender-ref ref="chat"/>
+    </logger>
+
 
 
     <root level="warn">
