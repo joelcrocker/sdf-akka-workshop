@@ -1,6 +1,7 @@
 package com.boldradius.sdf.akka
 
 import akka.actor._
+import com.boldradius.sdf.akka.RealTimeSessionStats.{RunStatsResponse, RunStats}
 import com.boldradius.sdf.akka.SessionStateLog.{Tick, GetLog}
 import scala.concurrent.duration._
 
@@ -10,6 +11,7 @@ object SessionStateLog {
   case object GetLog
 
   case object Tick
+
 }
 
 class SessionStateLog(sessionId: Long, timeout:FiniteDuration) extends Actor with ActorLogging{
@@ -31,7 +33,11 @@ class SessionStateLog(sessionId: Long, timeout:FiniteDuration) extends Actor wit
     case Tick =>
       context.parent ! Consumer.SessionInactive(sessionId, requestLog)
 
+    case  RunStats(f) =>
+      sender() ! RunStatsResponse(f(requestLog))
+
     case other => log.error(s"Unhandled msg: $other")
+
 
   }
 
