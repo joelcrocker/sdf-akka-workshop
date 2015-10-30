@@ -64,7 +64,7 @@ class SimulationActor extends Actor with ActorLogging{
   def createConsumer:ActorRef = context.actorOf(Consumer.props(inactiveTimeout), "consumerActor")
 
   def createStatsActor:ActorRef ={
-    context.actorOf(Stats.props, "statsActor")
+    context.actorOf(Stats.props(10 seconds), "statsActor")
   }
 
   def createEmail:ActorRef = context.actorOf(EmailActor.props, "emailActor")

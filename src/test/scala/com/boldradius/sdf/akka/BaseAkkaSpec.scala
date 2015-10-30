@@ -6,6 +6,7 @@ package com.boldradius.sdf.akka
 
 import akka.actor.{ActorIdentity, ActorRef, ActorSystem, Identify}
 import akka.testkit.{EventFilter, TestEvent, TestProbe}
+import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.BeforeAndAfterAll
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}

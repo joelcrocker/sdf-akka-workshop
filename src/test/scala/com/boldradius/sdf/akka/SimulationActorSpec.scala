@@ -3,6 +3,7 @@ package com.boldradius.sdf.akka
 import akka.actor.{ActorRef, Props}
 import akka.testkit.{EventFilter, TestProbe}
 import com.boldradius.sdf.akka.Stats.{SimulatedException, SessionStats}
+import scala.concurrent.duration._
 
 class SimulationActorSpec  extends BaseAkkaSpec {
 
@@ -22,7 +23,7 @@ class SimulationActorSpec  extends BaseAkkaSpec {
 
       val simemail = system.actorOf(Props(new SimulationActor{
         override   def createStatsActor:ActorRef ={
-          context.actorOf(Props(new Stats{
+          context.actorOf(Props(new Stats(10 seconds){
               override def receive:Receive = {
                 case _ => throw SimulatedException
               }

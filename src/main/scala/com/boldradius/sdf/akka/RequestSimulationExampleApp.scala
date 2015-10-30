@@ -19,16 +19,16 @@ object  RequestSimulationExampleApp extends App {
 
 
 
-  // Wait for the user to hit <enter>
-  println("Hit <enter> to stop the simulation")
-  StdIn.readLine()
-
-
-  system.stop(simulationApp)
-
-  // Terminate all actors and wait for graceful shutdown
-  system.shutdown()
-  system.awaitTermination(10 seconds)
+//  // Wait for the user to hit <enter>
+//  println("Hit <enter> to stop the simulation")
+//  StdIn.readLine()
+//
+//
+//  system.stop(simulationApp)
+//
+//  // Terminate all actors and wait for graceful shutdown
+//  system.shutdown()
+//  system.awaitTermination(10 seconds)
 }
 
 

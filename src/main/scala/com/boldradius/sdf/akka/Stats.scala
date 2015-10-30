@@ -1,18 +1,22 @@
 package com.boldradius.sdf.akka
 
 import akka.actor.{ActorLogging, Props, Actor}
+import akka.persistence.{SaveSnapshotSuccess, SnapshotOffer, PersistentActor}
 import com.boldradius.sdf.akka.Stats._
+
+import scala.concurrent.duration._
 
 
 object Stats{
 
-  def props:Props = Props(new Stats)
+  def props(persistInterval:FiniteDuration = 10 seconds):Props = Props(new Stats(persistInterval))
 
   case class SessionStats(sessionId:Long, stats:List[Request])
 
 
   case object GetRequestsPerBrowser
 
+  case object Save
 
   case class StatsAggregate(requestsPerBrowser: Map[String, Int])
 
@@ -28,33 +32,38 @@ object Stats{
 
 }
 
-class Stats extends Actor with ActorLogging{
+class Stats(persistInterval:FiniteDuration) extends  PersistentActor with ActorLogging{
 
-  override def receive: Receive = withStats(StatsAggregate(Map.empty))
+  override def persistenceId = "stats-id"
 
+  var state: StatsAggregate = StatsAggregate(Map.empty)
 
-//  override def postRestart(t: Throwable):Unit = {
-//    self  !
-//  }
+  import context.dispatcher
 
-  def withStats(stats:StatsAggregate):Receive = {
+  context.system.scheduler.schedule(persistInterval,persistInterval,self, Save)
 
+  def receiveCommand: Receive = {
     case SessionStats(sessionId, requests) =>
-      context.become(withStats(Stats.update(stats,requests)))
+      state = Stats.update(state,requests)
 
 
-    case GetRequestsPerBrowser => sender() ! stats.requestsPerBrowser
+    case GetRequestsPerBrowser => sender() ! state.requestsPerBrowser
 
-//    case ProvokeException =>
-//      println("StatsActor ProvokeEXception")
-//      throw SimulatedException
+    case Save =>
+      log.info("Saving Snapshot")
+      saveSnapshot(state)
+
+
+    case SaveSnapshotSuccess(metadata) => log.info("Saved Snapshot")
 
     case other => log.info("Unhandled msg:" + other)
 
 
   }
 
-
+  def receiveRecover: Receive = {
+    case SnapshotOffer(_, snapshot: StatsAggregate) => state = snapshot
+  }
 
 
 }
