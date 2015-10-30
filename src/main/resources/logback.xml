@@ -16,6 +16,15 @@
         </encoder>
     </appender>
 
+
+    <appender name="email" class="ch.qos.logback.core.FileAppender">
+        <file>${email.log-file:-email.log}</file>
+        <encoder>
+            <pattern>%date{HH:mm:ss} %-5level [%X{akkaSource}] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+
     <logger name="akka.actor.RepointableActorRef" level="debug" additivity="false">
         <appender-ref ref="console"/>
         <appender-ref ref="file"/>
@@ -26,6 +35,12 @@
         <appender-ref ref="console"/>
         <appender-ref ref="file"/>
     </logger>
+
+    <logger name="com.boldradius.sdf.email" level="debug" additivity="false">
+        <appender-ref ref="console"/>
+        <appender-ref ref="email"/>
+    </logger>
+
 
     <root level="warn">
         <appender-ref ref="console"/>

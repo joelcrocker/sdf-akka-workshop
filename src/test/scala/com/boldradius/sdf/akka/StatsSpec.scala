@@ -1,5 +1,6 @@
 package com.boldradius.sdf.akka
 
+import akka.actor.Actor
 import akka.util.Timeout
 import com.boldradius.sdf.akka.Stats.{GetRequestsPerBrowser, SessionStats}
 import org.scalatest.concurrent.ScalaFutures
@@ -34,6 +35,5 @@ class StatsSpec extends BaseAkkaSpec  with ScalaFutures {
 
     }
   }
-
 
 }

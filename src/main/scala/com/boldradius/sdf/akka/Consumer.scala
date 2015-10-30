@@ -30,19 +30,8 @@ class Consumer(inactiveTimeout:FiniteDuration) extends Actor with ActorLogging{
       )( sessionLogActorRef => sessionLogActorRef ! r )
 
     case SessionInactive(sessionId, stats) =>
-
-      println("SessionInactive sessionId = " + sessionId)
-
-      sessionlogMap.get(sessionId).fold[Unit]({
-
-        println("^^^^^^^^^^^^^^  no found sessionId")
-
-      }){sessionLogActorRef =>
-
-       println("***********  sending to stats")
-
+      sessionlogMap.get(sessionId).fold[Unit]({}){sessionLogActorRef =>
        context.parent ! Stats.SessionStats(sessionId, stats)
-
        context.stop(sessionLogActorRef)
        context.become(withSessionLog(sessionlogMap - sessionId))
 
