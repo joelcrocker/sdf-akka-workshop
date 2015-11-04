@@ -13,22 +13,22 @@ object StatsAggegator {
   case class ResBusiestMinute(minute: Int, count: Long)
   
   case object GetPageVisitDistribution
-  case class ResPageVisitDistribution()
+  case class ResPageVisitDistribution(percentagePerUrl: Map[String, Double])
   
   case object GetAverageVisitTimePerUrl
   case class ResAverageVisitTimePerUrl(averageVisitPerPage: Map[String, Double])
   
   case object GetTopLandingPages
-  case class ResTopLandingPages()
+  case class ResTopLandingPages(urlsWithCount: Seq[(String, Int)])
   
   case object GetTopSinkPages
-  case class ResTopSinkPages()
+  case class ResTopSinkPages(urlsWithCount: Seq[(String, Int)])
   
   case object GetTopBrowsers
   case class ResTopBrowsers(userCountByBrowser: Seq[(String, Long)])
   
   case object GetTopReferrals
-  case class ResTopReferrals()
+  case class ResTopReferrals(urlsWithCount: Seq[(String, Int)])
   
   
   def props = Props(new StatsAggegator)
@@ -81,8 +81,8 @@ object StatsAggegator {
       val totalCount = countByUrl.values.sum
       countByUrl.mapValues(_.toDouble / totalCount)
     }
-    def topCount: (String, Int) = {
-      countByUrl.maxBy(_._2)
+    def topByCount(keep: Int): Seq[(String, Int)] = {
+      countByUrl.toSeq.sortBy(-_._2).take(keep)
     }
   }
 
@@ -174,21 +174,21 @@ class StatsAggegator extends Actor with ActorLogging {
       sender() ! busiestMinute(requestsPerMinute)
 
     case GetPageVisitDistribution =>
-      sender() ! ResPageVisitDistribution
+      sender() ! ResPageVisitDistribution(urlDistributionStats.distribution)
 
     case GetAverageVisitTimePerUrl =>
       sender() ! ResAverageVisitTimePerUrl(urlVisitDurationStats.mapValues(_.average))
 
     case GetTopLandingPages =>
-      sender() ! ResTopLandingPages()
+      sender() ! ResTopLandingPages(urlLandingStats.topByCount(3))
 
     case GetTopSinkPages =>
-      sender() ! ResTopSinkPages()
+      sender() ! ResTopSinkPages(urlSinkStats.topByCount(3))
 
     case GetTopBrowsers =>
       sender() ! ResTopBrowsers(browserStats.topBrowsers(2))
 
     case GetTopReferrals =>
-      sender() ! ResTopReferrals()
+      sender() ! ResTopReferrals(???)
   }
 }

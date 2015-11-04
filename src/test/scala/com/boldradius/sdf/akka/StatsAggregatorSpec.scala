@@ -59,7 +59,7 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
       val newStats = StatsAggegator.updatedRequestsPerMinute(oldStats, requestHistory)
 
       val busiestMinute = StatsAggegator.busiestMinute(newStats)
-      busiestMinute shouldEqual (60L, 200L)
+      busiestMinute shouldEqual StatsAggegator.ResBusiestMinute(60, 200L)
     }
 
     "compute stats per url" should {
