@@ -3,6 +3,7 @@ package com.boldradius.sdf.akka
 import akka.actor.Actor.Receive
 import akka.actor.{Actor, ActorSystem}
 import com.boldradius.sdf.akka.RequestProducer._
+import scala.concurrent.Await
 import scala.io.StdIn
 import scala.concurrent.duration._
 
@@ -22,8 +23,8 @@ object  RequestSimulationExampleApp extends App {
   simulationApp.stop()
 
   // Terminate all actors and wait for graceful shutdown
-  system.shutdown()
-  system.awaitTermination(10 seconds)
+  system.terminate()
+  Await.result(system.whenTerminated, Duration.Inf)
 }
 
 
@@ -32,7 +33,7 @@ class RequestSimulationExampleApp(system:ActorSystem){
   val producer = system.actorOf(RequestProducer.props(100), "producerActor")
 
   // TODO: replace dead letters with your own consumer actor
-  val consumer = system.actorOf(Consumer.props, "consumerActor")
+  val consumer = system.deadLetters
 
   // Tell the producer to start working and to send messages to the consumer
   producer ! Start(consumer)
