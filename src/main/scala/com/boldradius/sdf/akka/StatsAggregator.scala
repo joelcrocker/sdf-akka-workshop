@@ -145,7 +145,7 @@ object StatsAggregator {
   def updatedRequestsPerMinute(oldStatistics: Map[Long, Long], history: Seq[Request])
   : Map[Long, Long] = {
     var newStatistics = oldStatistics withDefaultValue 0L
-    val minutes = history.map(_.timestamp).map(getMinuteFromTimestamp(_))
+    val minutes = history.map(request => getMinuteFromTimestamp(request.timestamp))
     for (minute <- minutes) {
       newStatistics += minute -> (newStatistics(minute) + 1)
     }
