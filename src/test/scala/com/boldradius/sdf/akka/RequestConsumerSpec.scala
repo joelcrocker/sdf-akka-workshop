@@ -12,5 +12,18 @@ class RequestConsumerSpec extends BaseAkkaSpec {
         consumer ! Request(100L, System.currentTimeMillis(), "localhost", "google.com", "chrome")
       }
     }
+    "result in a new SessionTracker" in {
+      val consumer = system.actorOf(RequestConsumer.props, "consumer")
+      consumer ! Request(200L, System.currentTimeMillis(), "localhost", "google.com", "chrome")
+      TestProbe().expectActor("/user/consumer/session-tracker-200")
+    }
+  }
+  "Multiple Requests to RequestConsumer" should {
+    "only result in one SessionTracker" in {
+      val consumer = TestActorRef(new RequestConsumer)
+      consumer ! Request(300L, System.currentTimeMillis(), "localhost", "google.com", "chrome")
+      consumer ! Request(300L, System.currentTimeMillis(), "localhost", "google.com", "chrome")
+      consumer.underlyingActor.sessionMap.size shouldEqual 1
+    }
   }
 }

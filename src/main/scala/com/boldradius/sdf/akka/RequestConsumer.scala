@@ -14,14 +14,16 @@ class RequestConsumer extends Actor with ActorLogging {
       log.info(s"RequestConsumer received a request $request.")
       if (!sessionMap.contains(request.sessionId)) {
         // create actor
-        val tracker = context.actorOf(SessionTracker.props(request.sessionId))
-        sessionMap += request.sessionId -> tracker
+        sessionMap += request.sessionId -> createSessionTracker(request.sessionId)
       }
       val tracker = sessionMap(request.sessionId)
 
       // forward our actor the new request info
       tracker forward request
   }
+
+  def createSessionTracker(id: Long) =
+    context.actorOf(SessionTracker.props(id), s"session-tracker-${id}")
 }
 
 
