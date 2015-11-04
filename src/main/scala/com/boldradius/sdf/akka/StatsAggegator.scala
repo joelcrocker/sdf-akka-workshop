@@ -106,10 +106,11 @@ object StatsAggegator {
     minuteOfDay
   }
 
-  def busiestMinute(statistics: Map[Long, Long]): Long = {
-    val (minute, _) = statistics.reduceLeft[(Long, Long)]((kv1, kv2) => if (kv1._2 > kv2._2) kv1 else kv2)
-    minute
+  def busiestMinute(statistics: Map[Long, Long]): (Long, Long) = {
+    statistics.reduceLeft[(Long, Long)]((kv1, kv2) => if (kv1._2 > kv2._2) kv1 else kv2)
   }
+
+  case object GetBusiestMinute
 }
 
 class StatsAggegator extends Actor with ActorLogging {
@@ -120,5 +121,7 @@ class StatsAggegator extends Actor with ActorLogging {
   def receive = {
     case SessionTracker.SessionStats(sessionId, history) =>
       requestsPerMinute = updatedRequestsPerMinute(requestsPerMinute, history)
+    case GetBusiestMinute =>
+      sender ! busiestMinute(requestsPerMinute)
   }
 }
