@@ -23,8 +23,8 @@ object  RequestSimulationExampleApp extends App {
   simulationApp.stop()
 
   // Terminate all actors and wait for graceful shutdown
-  system.terminate()
-  Await.result(system.whenTerminated, Duration.Inf)
+  system.shutdown()
+  system.awaitTermination(10 seconds)
 }
 
 
