@@ -11,7 +11,7 @@ object  RequestSimulationExampleApp extends App {
   // First, we create an actor system, a producer and a consumer
   val system = ActorSystem("EventProducerExample")
 
-
+  val settings = new Settings()
   val simulationApp = new RequestSimulationExampleApp(system)
 
   // Wait for the user to hit <enter>
