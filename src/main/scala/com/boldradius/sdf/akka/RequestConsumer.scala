@@ -9,7 +9,7 @@ object RequestConsumer {
 
 class RequestConsumer(val settings: Settings) extends Actor with ActorLogging {
   var sessionMap = Map.empty[Long, ActorRef]
-  val statsAggregator = context.actorOf(StatsAggegator.props)
+  val statsAggregator = context.actorOf(StatsAggregator.props)
 
   def receive = {
     case request: Request =>

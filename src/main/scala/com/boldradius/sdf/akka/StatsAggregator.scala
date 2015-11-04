@@ -4,7 +4,7 @@ import akka.actor._
 import java.sql.Timestamp
 
 
-object StatsAggegator {
+object StatsAggregator {
   // Messages
   case object GetNumberOfRequestsPerBrowser
   case class ResNumerOfRequetsPerBrowser(requestsPerBrowser: Map[String, Long])
@@ -31,7 +31,7 @@ object StatsAggegator {
   case class ResTopReferrers(urlsWithCount: Seq[(String, Long)])
   
   
-  def props = Props(new StatsAggegator)
+  def props = Props(new StatsAggregator)
 
   // Internal state
   case class BrowserStats(requests: Map[String, Long], users: Map[String, Long]) {
@@ -164,8 +164,8 @@ object StatsAggegator {
   }
 }
 
-class StatsAggegator extends Actor with ActorLogging {
-  import StatsAggegator._
+class StatsAggregator extends Actor with ActorLogging {
+  import StatsAggregator._
 
   var requestsPerMinute = Map[Long, Long]()
   var browserStats = BrowserStats(Map.empty, Map.empty)
