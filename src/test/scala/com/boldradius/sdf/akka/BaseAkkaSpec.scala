@@ -14,7 +14,7 @@ abstract class BaseAkkaSpec extends BaseSpec with BeforeAndAfterAll {
 
   implicit class TestProbeOps(probe: TestProbe) {
 
-    def expectActor(path: String, max: FiniteDuration = probe.remaining): ActorRef = {
+    def expectActor(path: String, max: FiniteDuration = 10 second): ActorRef = {
       probe.within(max) {
         var actor = null: ActorRef
         probe.awaitAssert {
