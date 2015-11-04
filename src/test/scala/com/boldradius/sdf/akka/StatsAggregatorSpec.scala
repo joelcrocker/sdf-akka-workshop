@@ -55,7 +55,7 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
         RequestFactory(sessionId=600L, timestamp = (5 minute).toMillis)
       )
 
-      val newStats = StatsAggegator.numberOfRequestsPerMinute(oldStats, requestHistory)
+      val newStats = StatsAggegator.updatedRequestsPerMinute(oldStats, requestHistory)
 
       val busiestMinute = StatsAggegator.busiestMinute(newStats)
       busiestMinute shouldEqual 60L

@@ -42,7 +42,7 @@ object StatsAggegator {
     newStats
   }
 
-  def numberOfRequestsPerMinute(oldStatistics: Map[Long, Long], history: Seq[Request]): Map[Long, Long] = {
+  def updatedRequestsPerMinute(oldStatistics: Map[Long, Long], history: Seq[Request]): Map[Long, Long] = {
     var newStatistics = oldStatistics withDefaultValue 0L
     val minutes = history.map(_.timestamp).map(getMinuteFromTimestamp(_))
     for (minute <- minutes) {
@@ -64,8 +64,12 @@ object StatsAggegator {
 }
 
 class StatsAggegator extends Actor with ActorLogging {
+  import StatsAggegator._
+
+  var requestsPerMinute = Map[Long, Long]()
+
   def receive = {
     case SessionTracker.SessionStats(sessionId, history) =>
-
+      requestsPerMinute = updatedRequestsPerMinute(requestsPerMinute, history)
   }
 }
