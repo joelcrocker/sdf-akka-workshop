@@ -25,7 +25,7 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
       newStats.users shouldBe  Map("chrome" -> 6, "firefox" -> 1)
     }
 
-    "compute stats per url" in {
+    "compute visit stats per url" in {
       import StatsAggegator.UrlVisitStats
       val sessionId = 100L
       def mkRequest(url: String, time: Long) = {
@@ -39,7 +39,7 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
         mkRequest("url2", 1030), // 20 ms
         mkRequest("url1", 1070)  // 40 ms
       )
-      val newStats = StatsAggegator.statsPerUrl(oldStats, sessionHistory)
+      val newStats = StatsAggegator.statsVisitsPerUrl(oldStats, sessionHistory)
       newStats shouldBe Map("url1" -> UrlVisitStats(110, 5), "url2" -> UrlVisitStats(60, 2))
     }
   }

@@ -5,11 +5,38 @@ import java.sql.Timestamp
 
 
 object StatsAggegator {
+  // Messages
+  case object GetNumberOfRequestsPerBrowser
+  case class ResNumerOfRequetsPerBrowser(requestsPerBrowser: Map[String, Long])
+  
+  case object GetBusiestMinute
+  case class ResBusiestMinute(minute: Int, count: Long)
+  
+  case object GetPageVisitDistribution
+  case class ResPageVisitDistribution()
+  
+  case object GetAverageVisitTimePerUrl
+  case class ResAverageVisitTimePerUrl(averageVisitPerPage: Map[String, Double])
+  
+  case object GetTopLandingPages
+  case class ResTopLandingPages()
+  
+  case object GetTopSinkPages
+  case class ResTopSinkPages()
+  
+  case object GetTopBrowsers
+  case class ResTopBrowsers(userCountByBrowser: Seq[(String, Long)])
+  
+  case object GetTopReferrals
+  case class ResTopReferrals()
+  
+  
   def props = Props(new StatsAggegator)
 
+  // Internal state
   case class BrowserStats(requests: Map[String, Long], users: Map[String, Long]) {
-    def topTwoBrowsers: Seq[(String, Long)] = {
-      users.toSeq.sortBy { case (browser, userCount) => userCount }.takeRight(2).reverse
+    def topBrowsers(count: Int): Seq[(String, Long)] = {
+      users.toSeq.sortBy { case (browser, userCount) => userCount }.takeRight(count).reverse
     }
   }
   case class UrlVisitStats(totalDuration: Long, visitCount: Long) {
@@ -17,7 +44,7 @@ object StatsAggegator {
   }
   type StatsPerUrl = Map[String, UrlVisitStats]
 
-  def statsPerBrowser(oldStats: BrowserStats, sessionHistory: Seq[Request]) : BrowserStats = {
+  def statsPerBrowser(oldStats: BrowserStats, sessionHistory: Seq[Request]): BrowserStats = {
     val sessionRequestStats = sessionHistory.groupBy(_.browser).map {
       case (browser, requests) => browser -> requests.size
     }
@@ -50,6 +77,13 @@ object StatsAggegator {
         case Some(count) => count
       }
     }
+    def distribution: Map[String, Double] = {
+      val totalCount = countByUrl.values.sum
+      countByUrl.mapValues(_.toDouble / totalCount)
+    }
+    def topCount: (String, Int) = {
+      countByUrl.maxBy(_._2)
+    }
   }
 
   def countPerSink(oldStatistics: UrlStats, history: Seq[Request])
@@ -80,7 +114,7 @@ object StatsAggegator {
     UrlStats(newStatistics)
   }
 
-  def statsPerUrl(oldStats: StatsPerUrl, sessionHistory: Seq[Request]): StatsPerUrl = {
+  def statsVisitsPerUrl(oldStats: StatsPerUrl, sessionHistory: Seq[Request]): StatsPerUrl = {
     var newStats = oldStats withDefaultValue UrlVisitStats(0, 0)
     for (Seq(prev, next) <- sessionHistory.sliding(2)) {
       val duration = next.timestamp - prev.timestamp
@@ -91,7 +125,8 @@ object StatsAggegator {
     newStats
   }
 
-  def updatedRequestsPerMinute(oldStatistics: Map[Long, Long], history: Seq[Request]): Map[Long, Long] = {
+  def updatedRequestsPerMinute(oldStatistics: Map[Long, Long], history: Seq[Request])
+  : Map[Long, Long] = {
     var newStatistics = oldStatistics withDefaultValue 0L
     val minutes = history.map(_.timestamp).map(getMinuteFromTimestamp(_))
     for (minute <- minutes) {
@@ -100,28 +135,60 @@ object StatsAggegator {
     newStatistics
   }
 
-  def getMinuteFromTimestamp(timestamp: Long): Long = {
+  private def getMinuteFromTimestamp(timestamp: Long): Long = {
     val date: Timestamp = new Timestamp(timestamp)
     val minuteOfDay = date.getHours() * 60 + date.getMinutes()
     minuteOfDay
   }
 
-  def busiestMinute(statistics: Map[Long, Long]): (Long, Long) = {
-    statistics.reduceLeft[(Long, Long)]((kv1, kv2) => if (kv1._2 > kv2._2) kv1 else kv2)
+  def busiestMinute(statistics: Map[Long, Long]): ResBusiestMinute = {
+    val (minute, count) =
+      statistics.reduceLeft[(Long, Long)]((kv1, kv2) => if (kv1._2 > kv2._2) kv1 else kv2)
+    ResBusiestMinute(minute.toInt, count)
   }
-
-  case object GetBusiestMinute
 }
 
 class StatsAggegator extends Actor with ActorLogging {
   import StatsAggegator._
 
   var requestsPerMinute = Map[Long, Long]()
+  var browserStats = BrowserStats(Map.empty, Map.empty)
+  var urlVisitDurationStats = Map.empty[String, UrlVisitStats]
+  var urlDistributionStats = UrlStats(Map.empty)
+  var urlLandingStats = UrlStats(Map.empty)
+  var urlSinkStats = UrlStats(Map.empty)
 
   def receive = {
     case SessionTracker.SessionStats(sessionId, history) =>
+      browserStats = statsPerBrowser(browserStats, history)
       requestsPerMinute = updatedRequestsPerMinute(requestsPerMinute, history)
+      urlDistributionStats = countByPage(urlDistributionStats, history)
+      urlVisitDurationStats = statsVisitsPerUrl(urlVisitDurationStats, history)
+      urlLandingStats = countPerLanding(urlLandingStats, history)
+      urlSinkStats = countPerSink(urlSinkStats, history)
+
+    case GetNumberOfRequestsPerBrowser =>
+      sender() ! ResNumerOfRequetsPerBrowser(browserStats.requests)
+
     case GetBusiestMinute =>
-      sender ! busiestMinute(requestsPerMinute)
+      sender() ! busiestMinute(requestsPerMinute)
+
+    case GetPageVisitDistribution =>
+      sender() ! ResPageVisitDistribution
+
+    case GetAverageVisitTimePerUrl =>
+      sender() ! ResAverageVisitTimePerUrl(urlVisitDurationStats.mapValues(_.average))
+
+    case GetTopLandingPages =>
+      sender() ! ResTopLandingPages()
+
+    case GetTopSinkPages =>
+      sender() ! ResTopSinkPages()
+
+    case GetTopBrowsers =>
+      sender() ! ResTopBrowsers(browserStats.topBrowsers(2))
+
+    case GetTopReferrals =>
+      sender() ! ResTopReferrals()
   }
 }
