@@ -17,6 +17,34 @@ object StatsAggegator {
     }
     newStatistics
   }
+
+  def countPerSink(oldStatistics: Map[String, Long], history: Seq[Request])
+  : Map[String, Long] = {
+    history.lastOption.match { // the "Sink" page
+      case Some(req: Request) =>  oldStatistics + (req.url -> 1L)
+      case None => oldStatistics
+    }
+  }
+
+  def countPerLanding(oldStatistics: Map[String, Long], history: Seq[Request])
+  : Map[String, Long] = {
+    history.headOption.match { // the "Landing" page
+      case Some(req: Request) =>  oldStatistics + (req.url -> 1L)
+      case None => oldStatistics
+    }
+  }
+
+  def countByPage(oldStatistics: Map[String, Long], history: Seq[Request])
+  : Map[String, Long] = {
+    var newStatistics = oldStatistics withDefaultValue 0L
+    val current = history.groupBy(_.url).map {
+      case (url, requests) => url -> requests.size
+    }
+    for ((url, count) <- current) {
+      newStatistics += url -> (newStatistics(url) + count)
+    }
+    newStatistics
+  }
 }
 
 class StatsAggegator extends Actor with ActorLogging {
