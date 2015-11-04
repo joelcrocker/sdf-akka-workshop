@@ -2,7 +2,7 @@ package com.boldradius.sdf.akka
 
 import akka.actor._
 import System.{currentTimeMillis => now}
-import SessionActor._
+import SessionRequestEmitter._
 
 // Wraps around a session and emits requests to the target actor
 class SessionRequestEmitter(target: ActorRef) extends Actor with ActorLogging {
@@ -30,10 +30,10 @@ class SessionRequestEmitter(target: ActorRef) extends Actor with ActorLogging {
   }
 }
 
-object SessionActor {
+object SessionRequestEmitter {
 
   def props(target: ActorRef) = Props(new SessionRequestEmitter(target))
 
-  // Message protocol for the SessionActor
+  // Message protocol for the SessionRequestEmitter
   case object Click
 }
