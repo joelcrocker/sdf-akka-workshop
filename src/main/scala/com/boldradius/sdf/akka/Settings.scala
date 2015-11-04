@@ -14,4 +14,7 @@ class Settings(config: Config = ConfigFactory.load()) {
       appConfig.getDuration("session-tracker.inactivity-timeout", MILLISECONDS).millis
     }
   }
+
+  // Init objects
+  sessionTracker
 }
