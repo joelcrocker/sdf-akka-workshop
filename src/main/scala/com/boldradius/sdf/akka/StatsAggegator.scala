@@ -158,9 +158,8 @@ object StatsAggegator {
     minuteOfDay
   }
 
-  def busiestMinute(statistics: Map[Long, Long]): ResBusiestMinute = {
-    val (minute, count) =
-      statistics.reduceLeft[(Long, Long)]((kv1, kv2) => if (kv1._2 > kv2._2) kv1 else kv2)
+  def busiestMinute(requestsByMinute: Map[Long, Long]): ResBusiestMinute = {
+    val (minute, count) = requestsByMinute.maxBy { case (minute, count) => count }
     ResBusiestMinute(minute.toInt, count)
   }
 }
