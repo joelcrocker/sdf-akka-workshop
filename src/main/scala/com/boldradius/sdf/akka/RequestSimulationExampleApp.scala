@@ -1,11 +1,10 @@
 package com.boldradius.sdf.akka
 
-import akka.actor.Actor.Receive
-import akka.actor.{Actor, ActorSystem}
-import com.boldradius.sdf.akka.RequestProducer._
-import scala.concurrent.Await
+import akka.actor._
+import com.boldradius.sdf.akka.sim._
 import scala.io.StdIn
 import scala.concurrent.duration._
+
 
 object  RequestSimulationExampleApp extends App {
 
@@ -34,15 +33,10 @@ class RequestSimulationExampleApp(system:ActorSystem){
   val consumer = system.actorOf(RequestConsumer.props, "consumer")
 
   // Tell the producer to start working and to send messages to the consumer
-  producer ! Start(consumer)
-
+  producer ! RequestProducer.Start(consumer)
 
   def stop() = {
     // Tell the producer to stop working
-    producer ! Stop
-
+    producer ! RequestProducer.Stop
   }
-
-
 }
-
