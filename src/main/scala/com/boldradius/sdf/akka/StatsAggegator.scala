@@ -23,32 +23,53 @@ object StatsAggegator {
     BrowserStats(newRequestStats, newUserStats)
   }
 
-  def countPerSink(oldStatistics: Map[String, Long], history: Seq[Request])
-  : Map[String, Long] = {
-    history.lastOption.match { // the "Sink" page
-      case Some(req: Request) =>  oldStatistics + (req.url -> 1L)
+  case class UrlStats(val countByUrl: Map[String, Int]) {
+    def increment(url: String, count: Int): UrlStats = {
+      countByUrl.get(url) match {
+        case None => UrlStats(countByUrl + (url -> count))
+        case Some(oldCount: Int) => UrlStats(countByUrl + (url -> (oldCount + count)))
+      }
+    }
+    def urlPercentage(url: String): Int = {
+      countByUrl.get(url) match {
+        case None => 0
+        case Some(count) => ((100.0 * count)/countByUrl.values.sum).toInt
+      }
+    }
+    def urlCount(url: String): Int = {
+      countByUrl.get(url) match {
+        case None => 0
+        case Some(count) => count
+      }
+    }
+  }
+
+  def countPerSink(oldStatistics: UrlStats, history: Seq[Request])
+  : UrlStats = {
+    history.lastOption match { // the "Sink" page
+      case Some(req: Request) => oldStatistics.increment(req.url, 1)
       case None => oldStatistics
     }
   }
 
-  def countPerLanding(oldStatistics: Map[String, Long], history: Seq[Request])
-  : Map[String, Long] = {
-    history.headOption.match { // the "Landing" page
-      case Some(req: Request) =>  oldStatistics + (req.url -> 1L)
+  def countPerLanding(oldStatistics: UrlStats, history: Seq[Request])
+  : UrlStats = {
+    history.headOption match { // the "Landing" page
+      case Some(req: Request) => oldStatistics.increment(req.url, 1)
       case None => oldStatistics
     }
   }
 
-  def countByPage(oldStatistics: Map[String, Long], history: Seq[Request])
-  : Map[String, Long] = {
-    var newStatistics = oldStatistics withDefaultValue 0L
+  def countByPage(oldStatistics: UrlStats, history: Seq[Request])
+  : UrlStats = {
+    var newStatistics = oldStatistics.countByUrl withDefaultValue 0
     val current = history.groupBy(_.url).map {
       case (url, requests) => url -> requests.size
     }
     for ((url, count) <- current) {
       newStatistics += url -> (newStatistics(url) + count)
     }
-    newStatistics
+    UrlStats(newStatistics)
   }
 }
 
