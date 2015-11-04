@@ -26,12 +26,12 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
     }
 
     "compute stats per url" in {
-      import StatsAggegator.UrlStats
+      import StatsAggegator.UrlVisitStats
       val sessionId = 100L
       def mkRequest(url: String, time: Long) = {
         Request(sessionId, time, url, sim.Session.randomReferrer, sim.Session.randomBrowser)
       }
-      val oldStats = Map("url1" -> UrlStats(100, 4))
+      val oldStats = Map("url1" -> UrlVisitStats(100, 4))
       // url1 gets 1 visit with 10 ms total, url2 gets 2 visits, with 60 ms total
       val sessionHistory = Seq(
         mkRequest("url1", 1000),
@@ -40,7 +40,7 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
         mkRequest("url1", 1070)  // 40 ms
       )
       val newStats = StatsAggegator.statsPerUrl(oldStats, sessionHistory)
-      newStats shouldBe Map("url1" -> UrlStats(110, 5), "url2" -> UrlStats(60, 2))
+      newStats shouldBe Map("url1" -> UrlVisitStats(110, 5), "url2" -> UrlVisitStats(60, 2))
     }
   }
 

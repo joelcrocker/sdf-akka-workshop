@@ -12,10 +12,10 @@ object StatsAggegator {
       users.toSeq.sortBy { case (browser, userCount) => userCount }.takeRight(2).reverse
     }
   }
-  case class UrlStats(totalDuration: Long, visitCount: Long) {
+  case class UrlVisitStats(totalDuration: Long, visitCount: Long) {
     def average: Double = totalDuration.toDouble / visitCount
   }
-  type StatsPerUrl = Map[String, UrlStats]
+  type StatsPerUrl = Map[String, UrlVisitStats]
 
   def statsPerBrowser(oldStats: BrowserStats, sessionHistory: Seq[Request]) : BrowserStats = {
     val sessionRequestStats = sessionHistory.groupBy(_.browser).map {
@@ -78,9 +78,10 @@ object StatsAggegator {
       newStatistics += url -> (newStatistics(url) + count)
     }
     UrlStats(newStatistics)
+  }
 
   def statsPerUrl(oldStats: StatsPerUrl, sessionHistory: Seq[Request]): StatsPerUrl = {
-    var newStats = oldStats withDefaultValue UrlStats(0, 0)
+    var newStats = oldStats withDefaultValue UrlVisitStats(0, 0)
     for (Seq(prev, next) <- sessionHistory.sliding(2)) {
       val duration = next.timestamp - prev.timestamp
       val url = prev.url
