@@ -1,6 +1,7 @@
 package com.boldradius.sdf.akka
 
 import akka.actor._
+import java.sql.Timestamp
 
 
 object StatsAggegator {
@@ -39,6 +40,26 @@ object StatsAggegator {
       newStats += url -> urlStats.copy(urlStats.totalDuration + duration, urlStats.visitCount + 1)
     }
     newStats
+  }
+
+  def numberOfRequestsPerMinute(oldStatistics: Map[Long, Long], history: Seq[Request]): Map[Long, Long] = {
+    var newStatistics = oldStatistics withDefaultValue 0L
+    val minutes = history.map(_.timestamp).map(getMinuteFromTimestamp(_))
+    for (minute <- minutes) {
+      newStatistics += minute -> (newStatistics(minute) + 1)
+    }
+    newStatistics
+  }
+
+  def getMinuteFromTimestamp(timestamp: Long): Long = {
+    val date: Timestamp = new Timestamp(timestamp)
+    val minuteOfDay = date.getHours() * 60 + date.getMinutes()
+    minuteOfDay
+  }
+
+  def busiestMinute(statistics: Map[Long, Long]): Long = {
+    val (minute, _) = statistics.reduceLeft[(Long, Long)]((kv1, kv2) => if (kv1._2 > kv2._2) kv1 else kv2)
+    minute
   }
 }
 

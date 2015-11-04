@@ -2,7 +2,7 @@ package com.boldradius.sdf.akka
 
 
 object RequestFactory {
-  def apply(sessionId: Long): Request = {
-    Request(sessionId, System.currentTimeMillis(), "localhost", "google.com", "chrome")
+  def apply(sessionId: Long, timestamp: Long = System.currentTimeMillis()): Request = {
+    Request(sessionId, timestamp, "localhost", "google.com", "chrome")
   }
 }

@@ -1,5 +1,6 @@
 package com.boldradius.sdf.akka
 
+import scala.concurrent.duration._
 
 class StatsAggregatorSpec extends BaseAkkaSpec {
   "StatsAggregator" should {
@@ -39,6 +40,25 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
       )
       val newStats = StatsAggegator.statsPerUrl(oldStats, sessionHistory)
       newStats shouldBe Map("url1" -> UrlStats(110, 5), "url2" -> UrlStats(60, 2))
+    }
+  }
+
+  "Busiest request per minute" should {
+    "return the expected value" in {
+      val oldStats = Map(50L -> 100L, 60L -> 200L)
+
+      val requestHistory = Seq(
+        RequestFactory(sessionId=500L, timestamp = (1 minute).toMillis),
+        RequestFactory(sessionId=600L, timestamp = (5 minute).toMillis),
+        RequestFactory(sessionId=600L, timestamp = (5 minute).toMillis),
+        RequestFactory(sessionId=600L, timestamp = (5 minute).toMillis),
+        RequestFactory(sessionId=600L, timestamp = (5 minute).toMillis)
+      )
+
+      val newStats = StatsAggegator.numberOfRequestsPerMinute(oldStats, requestHistory)
+
+      val busiestMinute = StatsAggegator.busiestMinute(newStats)
+      busiestMinute shouldEqual 60L
     }
   }
 }
