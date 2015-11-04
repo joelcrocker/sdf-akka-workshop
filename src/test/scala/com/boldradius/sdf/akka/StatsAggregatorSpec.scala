@@ -44,6 +44,36 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
     }
   }
 
+  "Referrers per user" should {
+    "be updated correctly" in {
+      val sessionId = 100L
+      def mkRequest(referrer: String) = {
+        Request(sessionId, System.currentTimeMillis(), sim.Session.randomUrl,
+          referrer, sim.Session.randomBrowser
+        )
+      }
+      val oldStats = StatsAggegator.ReferrerStats(
+        Map("google" -> 5, "facebook" -> 3, "twitter" -> 1)
+      )
+      val sessionHistory = {
+        (0 until 5).map(_ => mkRequest("facebook")) ++
+          (0 until 7).map(_ => mkRequest("google"))
+      }
+
+      val newStats = StatsAggegator.statsPerReferrer(oldStats, sessionHistory)
+      newStats.users shouldBe Map("google" -> 6, "facebook" -> 4, "twitter" -> 1)
+    }
+
+    "return the top two referrers by user" in {
+      val stats = StatsAggegator.ReferrerStats(
+        Map("google" -> 5, "facebook" -> 3, "twitter" -> 1)
+      )
+
+      val topTwo = stats.topTwoReferrers
+      topTwo shouldBe Seq(("google", 5), ("facebook", 3))
+    }
+  }
+
   "Busiest request per minute" should {
     "return the expected value" in {
       val oldStats = Map(50L -> 100L, 60L -> 200L)

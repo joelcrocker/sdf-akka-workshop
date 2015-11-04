@@ -39,6 +39,13 @@ object StatsAggegator {
       users.toSeq.sortBy { case (browser, userCount) => userCount }.takeRight(count).reverse
     }
   }
+
+  case class ReferrerStats(users: Map[String, Long]) {
+    def topTwoReferrers: Seq[(String, Long)] = {
+      users.toSeq.sortBy { case (referrer, userCount) => userCount}.takeRight(2).reverse
+    }
+  }
+
   case class UrlVisitStats(totalDuration: Long, visitCount: Long) {
     def average: Double = totalDuration.toDouble / visitCount
   }
@@ -56,6 +63,16 @@ object StatsAggegator {
       newUserStats += browser -> (newUserStats(browser) + 1)
     }
     BrowserStats(newRequestStats, newUserStats)
+  }
+
+  def statsPerReferrer(oldStats: ReferrerStats, sessionHistory: Seq[Request]): ReferrerStats = {
+    val sessionReferrers = sessionHistory.map(_.referrer).distinct
+
+    var newUserStats = oldStats.users withDefaultValue 0L
+    for (referrer <- sessionReferrers) {
+      newUserStats += referrer -> (newUserStats(referrer) + 1)
+    }
+    ReferrerStats(newUserStats)
   }
 
   case class UrlStats(val countByUrl: Map[String, Int]) {
