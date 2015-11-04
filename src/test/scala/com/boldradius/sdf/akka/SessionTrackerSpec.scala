@@ -6,8 +6,8 @@ class SessionTrackerSpec extends BaseAkkaSpec {
   "A new Request" should {
     "Result in a Request being added to the session history" in {
       val actorRef = TestActorRef(new SessionTracker(100L))
-      val request = RequestFactory.buildRequest(100L)
-      val request2 = RequestFactory.buildRequest(100L)
+      val request = RequestFactory(sessionId = 100L)
+      val request2 = RequestFactory(sessionId = 100L)
       val prevSize = actorRef.underlyingActor.history.size
       actorRef ! request
       actorRef ! request2
