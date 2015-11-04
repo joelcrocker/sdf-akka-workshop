@@ -47,7 +47,7 @@ class RequestProducer(concurrentSessions:Int) extends Actor with ActorLogging {
 
     if(activeSessions < concurrentSessions) {
       log.debug("Creating a new session")
-      context.actorOf(SessionActor.props(target))
+      context.actorOf(SessionRequestEmitter.props(target))
     }
   }
 }
