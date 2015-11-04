@@ -28,15 +28,4 @@ class RequestConsumerSpec extends BaseAkkaSpec {
       consumer.underlyingActor.sessionMap.size shouldEqual 1
     }
   }
-//  "A terminated tracker" should {
-//    "be removed from the consumer's session map" in {
-//      val consumer = TestActorRef[RequestConsumer](RequestConsumer.props)
-//      val sessionId = 600L
-//      consumer ! RequestFactory(sessionId)
-//      val tracker = consumer.underlyingActor.sessionMap(sessionId)
-//      consumer ! Terminated(tracker)(true, true)
-//
-//      consumer.underlyingActor.sessionMap.contains(sessionId) shouldBe false
-//    }
-//  }
 }

@@ -34,5 +34,3 @@ class RequestConsumer extends Actor with ActorLogging {
     tracker
   }
 }
-
-

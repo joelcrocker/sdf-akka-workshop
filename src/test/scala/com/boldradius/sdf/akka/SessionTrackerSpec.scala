@@ -41,7 +41,8 @@ class SessionTrackerSpec extends BaseAkkaSpec {
       val sessionId = 500L
       val request = RequestFactory(sessionId = sessionId)
 
-      val tracker = system.actorOf(SessionTracker.props(sessionId, 50 milliseconds, system.deadLetters))
+      val tracker = system.actorOf(
+        SessionTracker.props(sessionId, 50 milliseconds, system.deadLetters))
       probe.watch(tracker)
 
       tracker ! request
