@@ -1,9 +1,10 @@
-package com.boldradius.sdf.akka
+package com.boldradius.sdf.akka.sim
 
-import scala.util.Random
-import Session._
-import System.{currentTimeMillis => now}
+import java.lang.System.{currentTimeMillis => now}
+import com.boldradius.sdf.akka.sim.Session._
 import scala.concurrent.duration._
+import scala.util.Random
+import com.boldradius.sdf.akka._
 
 
 class Session {
@@ -65,6 +66,4 @@ object Session {
     val s = weight * 10
     deviate(s seconds)
   }
-
-
 }

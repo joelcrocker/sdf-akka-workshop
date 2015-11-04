@@ -1,7 +1,8 @@
-package com.boldradius.sdf.akka
+package com.boldradius.sdf.akka.sim
 
 import akka.actor._
-import RequestProducer._
+import com.boldradius.sdf.akka.sim.RequestProducer._
+
 import scala.concurrent.duration._
 
 /**

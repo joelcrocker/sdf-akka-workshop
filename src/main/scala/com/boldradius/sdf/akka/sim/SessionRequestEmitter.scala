@@ -1,8 +1,9 @@
-package com.boldradius.sdf.akka
+package com.boldradius.sdf.akka.sim
+
+import java.lang.System.{currentTimeMillis => now}
 
 import akka.actor._
-import System.{currentTimeMillis => now}
-import SessionRequestEmitter._
+import com.boldradius.sdf.akka.sim.SessionRequestEmitter._
 
 // Wraps around a session and emits requests to the target actor
 class SessionRequestEmitter(target: ActorRef) extends Actor with ActorLogging {
