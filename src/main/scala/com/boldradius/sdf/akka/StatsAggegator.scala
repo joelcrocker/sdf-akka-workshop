@@ -6,16 +6,21 @@ import akka.actor._
 object StatsAggegator {
   def props = Props(new StatsAggegator)
 
-  def numberOfRequestsPerBrowser(oldStatistics: Map[String, Long], history: Seq[Request])
-  : Map[String, Long] = {
-    var newStatistics = oldStatistics withDefaultValue 0L
-    val current = history.groupBy(_.browser).map {
+  case class BrowserStats(requests: Map[String, Long], users: Map[String, Long])
+
+  def statsPerBrowser(oldStats: BrowserStats, sessionHistory: Seq[Request])
+  : BrowserStats = {
+    val sessionRequestStats = sessionHistory.groupBy(_.browser).map {
       case (browser, requests) => browser -> requests.size
     }
-    for ((browser, count) <- current) {
-      newStatistics += browser -> (newStatistics(browser) + count)
+
+    var newRequestStats = oldStats.requests withDefaultValue 0L
+    var newUserStats = oldStats.users withDefaultValue 0L
+    for ((browser, count) <- sessionRequestStats) {
+      newRequestStats += browser -> (newRequestStats(browser) + count)
+      newUserStats += browser -> (newRequestStats(browser) + 1)
     }
-    newStatistics
+    BrowserStats(newRequestStats, newUserStats)
   }
 
   def countPerSink(oldStatistics: Map[String, Long], history: Seq[Request])
