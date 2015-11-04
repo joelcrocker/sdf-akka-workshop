@@ -4,19 +4,21 @@ import akka.actor._
 import scala.concurrent.duration._
 
 object RequestConsumer {
-  def props = Props(new RequestConsumer)
+  def props(settings: Settings) = Props(new RequestConsumer(settings))
 }
 
-class RequestConsumer extends Actor with ActorLogging {
+class RequestConsumer(val settings: Settings) extends Actor with ActorLogging {
   var sessionMap = Map.empty[Long, ActorRef]
-  val inactivityDuration = 20 seconds
 
   def receive = {
     case request: Request =>
       log.info(s"RequestConsumer received a request $request.")
       if (!sessionMap.contains(request.sessionId)) {
         // create actor
-        sessionMap += request.sessionId -> createSessionTracker(request.sessionId, inactivityDuration)
+        val tracker = createSessionTracker(
+          request.sessionId, settings.sessionTracker.inactivityTimeout
+        )
+        sessionMap += request.sessionId -> tracker
       }
       val tracker = sessionMap(request.sessionId)
 
@@ -34,5 +36,3 @@ class RequestConsumer extends Actor with ActorLogging {
     tracker
   }
 }
-
-

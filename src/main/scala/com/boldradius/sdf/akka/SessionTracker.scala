@@ -3,9 +3,7 @@ package com.boldradius.sdf.akka
 import akka.actor._
 import scala.concurrent.duration._
 
-/**
- * Created by Lexcellence on 2015-11-04.
- */
+
 class SessionTracker(sessionId: Long, inactivityTimeout: Duration, statsCollector: ActorRef) extends Actor with ActorLogging {
   import SessionTracker._
 
