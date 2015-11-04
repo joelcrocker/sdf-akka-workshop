@@ -69,7 +69,7 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
         Map("google" -> 5, "facebook" -> 3, "twitter" -> 1)
       )
 
-      val topTwo = stats.topTwoReferrers
+      val topTwo = stats.topReferrers(2)
       topTwo shouldBe Seq(("google", 5), ("facebook", 3))
     }
   }

@@ -27,8 +27,8 @@ object StatsAggegator {
   case object GetTopBrowsers
   case class ResTopBrowsers(userCountByBrowser: Seq[(String, Long)])
   
-  case object GetTopReferrals
-  case class ResTopReferrals(urlsWithCount: Seq[(String, Int)])
+  case object GetTopReferrers
+  case class ResTopReferrers(urlsWithCount: Seq[(String, Long)])
   
   
   def props = Props(new StatsAggegator)
@@ -41,8 +41,8 @@ object StatsAggegator {
   }
 
   case class ReferrerStats(users: Map[String, Long]) {
-    def topTwoReferrers: Seq[(String, Long)] = {
-      users.toSeq.sortBy { case (referrer, userCount) => userCount}.takeRight(2).reverse
+    def topReferrers(count: Int): Seq[(String, Long)] = {
+      users.toSeq.sortBy { case (referrer, userCount) => userCount}.takeRight(count).reverse
     }
   }
 
@@ -174,6 +174,7 @@ class StatsAggegator extends Actor with ActorLogging {
   var urlDistributionStats = UrlStats(Map.empty)
   var urlLandingStats = UrlStats(Map.empty)
   var urlSinkStats = UrlStats(Map.empty)
+  var referrerStats = ReferrerStats(Map.empty)
 
   def receive = {
     case SessionTracker.SessionStats(sessionId, history) =>
@@ -205,7 +206,7 @@ class StatsAggegator extends Actor with ActorLogging {
     case GetTopBrowsers =>
       sender() ! ResTopBrowsers(browserStats.topBrowsers(2))
 
-    case GetTopReferrals =>
-      sender() ! ResTopReferrals(???)
+    case GetTopReferrers =>
+      sender() ! ResTopReferrers(referrerStats.topReferrers(2))
   }
 }
