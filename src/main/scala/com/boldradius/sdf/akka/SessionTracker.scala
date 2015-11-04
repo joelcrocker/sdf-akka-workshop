@@ -1,20 +1,33 @@
 package com.boldradius.sdf.akka
 
 import akka.actor._
+import scala.concurrent.duration._
 
 /**
  * Created by Lexcellence on 2015-11-04.
  */
-class SessionTracker(sessionId: Long) extends Actor with ActorLogging {
+class SessionTracker(sessionId: Long, inactivityTimeout: Duration, statsCollector: ActorRef) extends Actor with ActorLogging {
+  import SessionTracker._
 
   var history = Vector.empty[Request]
+
+  context.setReceiveTimeout(inactivityTimeout)
+
   def receive = {
     case req: Request if sessionId == req.sessionId =>
       log.info("SessionTracker with id {} has received request {}", sessionId, req.toString)
       history :+= req
+
+    case ReceiveTimeout =>
+      log.info(s"Session inactive: $sessionId")
+      statsCollector ! SessionStats(sessionId, history)
+      context.stop(self)
   }
 }
 
 object SessionTracker {
-  def props(sessionId: Long) = Props(new SessionTracker(sessionId))
+  def props(sessionId: Long, inactivityTimeout: Duration, statsCollector: ActorRef) =
+    Props(new SessionTracker(sessionId, inactivityTimeout, statsCollector))
+
+  case class SessionStats(sessionId: Long, requestHistory: Seq[Request])
 }
