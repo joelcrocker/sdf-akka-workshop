@@ -214,7 +214,7 @@ class StatsAggregator(settings: Settings) extends PersistentActor with ActorLogg
     case sessionStats: SessionTracker.SessionStats =>
       persist(sessionStats)(updateData)
       eventCount += 1
-      if (eventCount == settings.statsAggregator.snapshotInterval) {
+      if (eventCount >= settings.statsAggregator.snapshotInterval) {
         eventCount = 0
         saveSnapshot(statsData)
       }
