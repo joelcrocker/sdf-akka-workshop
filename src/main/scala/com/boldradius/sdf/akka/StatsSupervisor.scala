@@ -9,13 +9,23 @@ import scala.util.control.NonFatal
  */
 
 object StatsSupervisor {
-  def props(alerter: ActorRef) = Props(new StatsSupervisor(alerter))
+  val defaultMaxRetries: Int = 2
+  val defaultRetryTimeRange: Duration = 15 minutes
+
+  def props(alerter: ActorRef,
+            maxRetries: Int = defaultMaxRetries,
+            retryTimeRange: Duration = defaultRetryTimeRange) = {
+    Props(new StatsSupervisor(alerter, maxRetries, retryTimeRange))
+  }
 
   case object GetStatsAggregator
   case class StatsAggregatorResponse(aggregator: ActorRef)
 }
 
-class StatsSupervisor(alerter: ActorRef) extends Actor with ActorLogging {
+class StatsSupervisor(alerter: ActorRef,
+                      maxRetries: Int = StatsSupervisor.defaultMaxRetries,
+                      retryTimeRange: Duration = StatsSupervisor.defaultRetryTimeRange
+) extends Actor with ActorLogging {
   import StatsSupervisor._
 
   var lastThrowable: Option[Throwable] = None
@@ -43,7 +53,7 @@ class StatsSupervisor(alerter: ActorRef) extends Actor with ActorLogging {
       }
     }
     OneForOneStrategy(
-      maxNrOfRetries = 2, withinTimeRange = 15 minutes
+      maxNrOfRetries = maxRetries, withinTimeRange = retryTimeRange
     )(decider)
   }
 

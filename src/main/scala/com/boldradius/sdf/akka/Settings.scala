@@ -15,6 +15,14 @@ class Settings(config: Config = ConfigFactory.load()) {
     }
   }
 
+  object statsSupervisor {
+    val maxRetries: Int = { appConfig.getInt("stats-supervisor.max-retries") }
+    val retryTimeRange: Duration = {
+      appConfig.getDuration("stats-supervisor.retry-time-range", MILLISECONDS).millis
+    }
+  }
+
   // Init objects
   sessionTracker
+  statsSupervisor
 }
