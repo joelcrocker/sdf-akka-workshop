@@ -13,7 +13,8 @@ object RequestConsumer {
 
 class RequestConsumer(val settings: Settings) extends Actor with ActorLogging with Stash {
   var sessionMap = Map.empty[Long, ActorRef]
-  val statsSupervisor = context.actorOf(StatsSupervisor.props)
+  val alerter = context.actorOf(Alerter.props)
+  val statsSupervisor = context.actorOf(StatsSupervisor.props(alerter))
   statsSupervisor ! StatsSupervisor.GetStatsAggregator
 
   override def receive: Receive = {

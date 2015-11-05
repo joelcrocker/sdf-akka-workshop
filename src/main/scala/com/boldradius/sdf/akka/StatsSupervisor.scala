@@ -9,18 +9,17 @@ import scala.util.control.NonFatal
  */
 
 object StatsSupervisor {
-  def props() = Props(new StatsSupervisor())
+  def props(alerter: ActorRef) = Props(new StatsSupervisor(alerter))
 
   case object GetStatsAggregator
   case class StatsAggregatorResponse(aggregator: ActorRef)
 }
 
-class StatsSupervisor extends Actor with ActorLogging {
+class StatsSupervisor(alerter: ActorRef) extends Actor with ActorLogging {
   import StatsSupervisor._
 
   var lastThrowable: Option[Throwable] = None
   val statsAggregator = createStatsAggregator()
-  val alerter = context.actorOf(Alerter.props)
 
   context.watch(statsAggregator)
 

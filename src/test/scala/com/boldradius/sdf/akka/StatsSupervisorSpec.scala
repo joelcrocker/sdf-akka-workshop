@@ -20,13 +20,11 @@ class SimStatsAggregator extends Actor with ActorLogging {
 
 class StatsSupervisorSpec extends BaseAkkaSpec with ScalaFutures {
   "a StatsSupervisor with a child stats aggregator with a throwing receive" should {
-    "restart the child a limited number of times, then let it die" in {
+    "restart the child a limited number of times, then let it die and alarm" in {
       implicit val timeout = Timeout(5 seconds)
       val probe = TestProbe()
-      val supervisor = system.actorOf(Props(new StatsSupervisor() {
-        override def createStatsAggregator() =
-          context.actorOf(Props(new SimStatsAggregator()))
-      }))
+      val alerterProbe = TestProbe()
+      val supervisor = createSupervisor(alerterProbe.ref)
 
       val future = (supervisor ? GetStatsAggregator).mapTo[StatsAggregatorResponse]
       val StatsAggregatorResponse(aggregator) = Await.result(future, timeout.duration)
@@ -38,16 +36,15 @@ class StatsSupervisorSpec extends BaseAkkaSpec with ScalaFutures {
       }
 
       probe.expectTerminated(aggregator, 3 seconds)
+      alerterProbe.expectMsgPF() { case _: Alerter.Alarm => }
     }
   }
 
-  "restart the child while the number of restarts is less than the limit" in {
+  "restart the child while the number of restarts is less than the limit and not alarm" in {
     implicit val timeout = Timeout(5 seconds)
     val probe = TestProbe()
-    val supervisor = system.actorOf(Props(new StatsSupervisor() {
-      override def createStatsAggregator() =
-        context.actorOf(Props(new SimStatsAggregator()))
-    }))
+    val alerterProbe = TestProbe()
+    val supervisor = createSupervisor(alerterProbe.ref)
 
     val future = (supervisor ? GetStatsAggregator).mapTo[StatsAggregatorResponse]
     val StatsAggregatorResponse(aggregator) = Await.result(future, timeout.duration)
@@ -59,5 +56,13 @@ class StatsSupervisorSpec extends BaseAkkaSpec with ScalaFutures {
     }
 
     probe.expectNoMsg()
+    alerterProbe.expectNoMsg()
+  }
+
+  def createSupervisor(alerter: ActorRef): ActorRef = {
+    system.actorOf(Props(new StatsSupervisor(alerter) {
+      override def createStatsAggregator() =
+        context.actorOf(Props(new SimStatsAggregator()))
+    }))
   }
 }
