@@ -9,4 +9,10 @@ object RequestFactory {
   : Request = {
     Request(sessionId, timestamp, url, referrer, browser)
   }
+
+  def random(sessionId: Long, timeStamp: Long): Request = {
+    Request(sessionId, timeStamp, sim.Session.randomUrl,
+      sim.Session.randomReferrer, sim.Session.randomBrowser
+    )
+  }
 }

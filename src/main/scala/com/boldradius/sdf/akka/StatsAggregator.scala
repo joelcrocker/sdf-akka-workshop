@@ -7,7 +7,7 @@ import java.sql.Timestamp
 object StatsAggregator {
   // Messages
   case object GetNumberOfRequestsPerBrowser
-  case class ResNumerOfRequetsPerBrowser(requestsPerBrowser: Map[String, Long])
+  case class ResNumberOfRequestsPerBrowser(requestsPerBrowser: Map[String, Long])
   
   case object GetBusiestMinute
   case class ResBusiestMinute(minute: Int, count: Long)
@@ -19,10 +19,10 @@ object StatsAggregator {
   case class ResAverageVisitTimePerUrl(averageVisitPerPage: Map[String, Double])
   
   case object GetTopLandingPages
-  case class ResTopLandingPages(urlsWithCount: Seq[(String, Int)])
+  case class ResTopLandingPages(urlsWithCount: Seq[(String, Long)])
   
   case object GetTopSinkPages
-  case class ResTopSinkPages(urlsWithCount: Seq[(String, Int)])
+  case class ResTopSinkPages(urlsWithCount: Seq[(String, Long)])
   
   case object GetTopBrowsers
   case class ResTopBrowsers(userCountByBrowser: Seq[(String, Long)])
@@ -40,9 +40,9 @@ object StatsAggregator {
     }
   }
 
-  case class ReferrerStats(users: Map[String, Long]) {
+  case class ReferrerStats(referrers: Map[String, Long]) {
     def topReferrers(count: Int): Seq[(String, Long)] = {
-      users.toSeq.sortBy { case (referrer, userCount) => userCount}.takeRight(count).reverse
+      referrers.toSeq.sortBy { case (referrer, count) => count }.takeRight(count).reverse
     }
   }
 
@@ -66,13 +66,13 @@ object StatsAggregator {
   }
 
   def statsPerReferrer(oldStats: ReferrerStats, sessionHistory: Seq[Request]): ReferrerStats = {
-    val sessionReferrers = sessionHistory.map(_.referrer).distinct
+    val sessionReferrers = sessionHistory.map(_.referrer)
 
-    var newUserStats = oldStats.users withDefaultValue 0L
+    var newReferrerStats = oldStats.referrers withDefaultValue 0L
     for (referrer <- sessionReferrers) {
-      newUserStats += referrer -> (newUserStats(referrer) + 1)
+      newReferrerStats += referrer -> (newReferrerStats(referrer) + 1)
     }
-    ReferrerStats(newUserStats)
+    ReferrerStats(newReferrerStats)
   }
 
   case class UrlStats(val countByUrl: Map[String, Int]) {
@@ -98,8 +98,8 @@ object StatsAggregator {
       val totalCount = countByUrl.values.sum
       countByUrl.mapValues(_.toDouble / totalCount)
     }
-    def topByCount(keep: Int): Seq[(String, Int)] = {
-      countByUrl.toSeq.sortBy(-_._2).take(keep)
+    def topByCount(keep: Int): Seq[(String, Long)] = {
+      countByUrl.toSeq.sortBy(-_._2).take(keep).map { case (k, v) => (k, v.toLong) }
     }
   }
 
@@ -153,9 +153,9 @@ object StatsAggregator {
   }
 
   private def getMinuteFromTimestamp(timestamp: Long): Long = {
-    val date: Timestamp = new Timestamp(timestamp)
-    val minuteOfDay = date.getHours() * 60 + date.getMinutes()
-    minuteOfDay
+    // java.util.Date sucks!
+    // Using this approximation not accounting for leap seconds.
+    timestamp / (1000 * 60) % (24*60)
   }
 
   def busiestMinute(requestsByMinute: Map[Long, Long]): ResBusiestMinute = {
@@ -183,9 +183,10 @@ class StatsAggregator extends Actor with ActorLogging {
       urlVisitDurationStats = statsVisitsPerUrl(urlVisitDurationStats, history)
       urlLandingStats = countPerLanding(urlLandingStats, history)
       urlSinkStats = countPerSink(urlSinkStats, history)
+      referrerStats = statsPerReferrer(referrerStats, history)
 
     case GetNumberOfRequestsPerBrowser =>
-      sender() ! ResNumerOfRequetsPerBrowser(browserStats.requests)
+      sender() ! ResNumberOfRequestsPerBrowser(browserStats.requests)
 
     case GetBusiestMinute =>
       sender() ! busiestMinute(requestsPerMinute)
