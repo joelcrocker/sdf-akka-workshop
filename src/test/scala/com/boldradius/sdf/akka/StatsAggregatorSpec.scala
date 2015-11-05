@@ -1,9 +1,10 @@
 package com.boldradius.sdf.akka
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit}
 import org.scalatest._
 import scala.concurrent.duration._
+import scala.reflect.io.File
 
 class StatsAggregatorSpec extends BaseAkkaSpec {
 
@@ -153,8 +154,20 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
 class StatsAggregatorMessageSpec extends TestKit(ActorSystem()) with ImplicitSender
   with WordSpecLike with Matchers with Inspectors with BeforeAndAfterAll
 {
+  val settings = new Settings()
+  override def beforeAll(): Unit = {
+    File("target/test-snapshot").deleteRecursively()
+  }
   override def afterAll(): Unit = {
     shutdown()
+  }
+  def uniqueName(): String = {
+    System.identityHashCode(this) + "-" +
+      Thread.currentThread().getId.toString + "-" +
+      System.nanoTime().toString
+  }
+  def mkAggregatorActor(): ActorRef = {
+    system.actorOf(StatsAggregator.props(settings), uniqueName())
   }
 
   "StatsAggregator actor" should {
@@ -162,7 +175,7 @@ class StatsAggregatorMessageSpec extends TestKit(ActorSystem()) with ImplicitSen
     val sessionId = 100L
 
     "respond to GetNumberOfRequestsPerBrowser" in {
-      val aggregator = system.actorOf(StatsAggregator.props)
+      val aggregator = mkAggregatorActor()
       aggregator ! SessionTracker.SessionStats(sessionId, Seq(
         RequestFactory.random(sessionId, 10).copy(browser = "chrome"),
         RequestFactory.random(sessionId, 20).copy(browser = "chrome"),
@@ -173,7 +186,7 @@ class StatsAggregatorMessageSpec extends TestKit(ActorSystem()) with ImplicitSen
     }
 
     "respond to GetBusiestMinute" in {
-      val aggregator = system.actorOf(StatsAggregator.props)
+      val aggregator = mkAggregatorActor()
       aggregator ! SessionTracker.SessionStats(sessionId, Seq(
         RequestFactory.random(sessionId, 10).copy(browser = "chrome"),
         RequestFactory.random(sessionId, 60020).copy(browser = "chrome"),
@@ -184,7 +197,7 @@ class StatsAggregatorMessageSpec extends TestKit(ActorSystem()) with ImplicitSen
     }
 
     "respond to GetPageVisitDistribution" in {
-      val aggregator = system.actorOf(StatsAggregator.props)
+      val aggregator = mkAggregatorActor()
       aggregator ! SessionTracker.SessionStats(sessionId, Seq(
         RequestFactory.random(sessionId, 10).copy(url = "google.com"),
         RequestFactory.random(sessionId, 20).copy(url = "google.com"),
@@ -195,7 +208,7 @@ class StatsAggregatorMessageSpec extends TestKit(ActorSystem()) with ImplicitSen
     }
 
     "respond to GetAverageVisitTimePerUrl" in {
-      val aggregator = system.actorOf(StatsAggregator.props)
+      val aggregator = mkAggregatorActor()
       aggregator ! SessionTracker.SessionStats(sessionId, Seq(
         RequestFactory.random(sessionId, 10).copy(url = "google.com"),
         RequestFactory.random(sessionId, 30).copy(url = "google.com"),
@@ -207,7 +220,7 @@ class StatsAggregatorMessageSpec extends TestKit(ActorSystem()) with ImplicitSen
     }
 
     "respond to GetTopLandingPages" in {
-      val aggregator = system.actorOf(StatsAggregator.props)
+      val aggregator = mkAggregatorActor()
       aggregator ! SessionTracker.SessionStats(sessionId, Seq(
         RequestFactory.random(sessionId, 10).copy(url = "google.com"),
         RequestFactory.random(sessionId, 20).copy(url = "google.ca")
@@ -221,7 +234,7 @@ class StatsAggregatorMessageSpec extends TestKit(ActorSystem()) with ImplicitSen
     }
 
     "respond to GetTopSinkPages" in {
-      val aggregator = system.actorOf(StatsAggregator.props)
+      val aggregator = mkAggregatorActor()
       aggregator ! SessionTracker.SessionStats(sessionId, Seq(
         RequestFactory.random(sessionId, 10).copy(url = "google.com"),
         RequestFactory.random(sessionId, 20).copy(url = "google.ca")
@@ -235,7 +248,7 @@ class StatsAggregatorMessageSpec extends TestKit(ActorSystem()) with ImplicitSen
     }
 
     "respond to GetTopBrowsers" in {
-      val aggregator = system.actorOf(StatsAggregator.props)
+      val aggregator = mkAggregatorActor()
       aggregator ! SessionTracker.SessionStats(sessionId, Seq(
         RequestFactory.random(sessionId, 10).copy(browser = "chrome"),
         RequestFactory.random(sessionId, 20).copy(browser = "chrome"),
@@ -250,7 +263,7 @@ class StatsAggregatorMessageSpec extends TestKit(ActorSystem()) with ImplicitSen
     }
 
     "respond to GetTopReferrers" in {
-      val aggregator = system.actorOf(StatsAggregator.props)
+      val aggregator = mkAggregatorActor()
       aggregator ! SessionTracker.SessionStats(sessionId, Seq(
         RequestFactory.random(sessionId, 10).copy(referrer = "google.com"),
         RequestFactory.random(sessionId, 30).copy(referrer = "google.com"),

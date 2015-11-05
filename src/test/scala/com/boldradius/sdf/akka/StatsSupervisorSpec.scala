@@ -6,10 +6,12 @@ import akka.pattern.ask
 import akka.testkit._
 import akka.util.Timeout
 import com.boldradius.sdf.akka.StatsSupervisor.{StatsAggregatorResponse, GetStatsAggregator}
+import com.typesafe.config.ConfigFactory
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import com.boldradius.sdf.akka.StatsAggregator.GetNumberOfRequestsPerBrowser
 import org.scalatest.concurrent.ScalaFutures
+import scala.collection.JavaConversions._
 
 case class SimulatedException() extends IllegalStateException("Simulated exception!")
 class SimStatsAggregator extends Actor with ActorLogging {
@@ -19,6 +21,12 @@ class SimStatsAggregator extends Actor with ActorLogging {
 }
 
 class StatsSupervisorSpec extends BaseAkkaSpec with ScalaFutures {
+
+  override val settings = new Settings(ConfigFactory.parseMap(
+    Map("web-stats.stats-supervisor.max-retries" -> "2")
+  ).withFallback(ConfigFactory.load()))
+  assert(settings.statsSupervisor.maxRetries == 2)
+
   "a StatsSupervisor with a child stats aggregator with a throwing receive" should {
     "restart the child a limited number of times, then let it die and alarm" in {
       implicit val timeout = Timeout(5 seconds)
@@ -60,7 +68,7 @@ class StatsSupervisorSpec extends BaseAkkaSpec with ScalaFutures {
   }
 
   def createSupervisor(alerter: ActorRef): ActorRef = {
-    system.actorOf(Props(new StatsSupervisor(alerter) {
+    system.actorOf(Props(new StatsSupervisor(alerter, settings) {
       override def createStatsAggregator() =
         context.actorOf(Props(new SimStatsAggregator()))
     }))

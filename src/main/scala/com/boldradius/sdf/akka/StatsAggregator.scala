@@ -32,7 +32,7 @@ object StatsAggregator {
   case class ResTopReferrers(urlsWithCount: Seq[(String, Long)])
   
   
-  def props = Props(new StatsAggregator)
+  def props(settings: Settings) = Props(new StatsAggregator(settings))
 
   // Internal state
   case class BrowserStats(requests: Map[String, Long], users: Map[String, Long]) {
