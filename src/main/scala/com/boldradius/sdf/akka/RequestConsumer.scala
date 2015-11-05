@@ -3,6 +3,8 @@ package com.boldradius.sdf.akka
 import akka.actor._
 import com.boldradius.sdf.akka.RequestConsumer.{SessionMapResponse, GetSessionMap}
 import scala.concurrent.duration._
+import akka.cluster.Cluster
+import akka.cluster.ClusterEvent._
 
 object RequestConsumer {
   def props(settings: Settings) = Props(new RequestConsumer(settings))
@@ -15,6 +17,14 @@ class RequestConsumer(val settings: Settings) extends Actor with ActorLogging wi
   var sessionMap = Map.empty[Long, ActorRef]
   val alerter = context.actorOf(Alerter.props)
   val statsSupervisor = createStatsSupervisor()
+
+  val cluster = Cluster(context.system)
+
+  override def preStart(): Unit = {
+    cluster.subscribe(self, initialStateMode = InitialStateAsEvents, classOf[MemberEvent], classOf[UnreachableMember])
+  }
+
+  override def postStop(): Unit = cluster.unsubscribe(self)
 
   override def receive: Receive = {
     case StatsSupervisor.StatsAggregatorResponse(aggregator) =>
@@ -40,6 +50,10 @@ class RequestConsumer(val settings: Settings) extends Actor with ActorLogging wi
       tracker forward request
 
     case GetSessionMap => sender ! SessionMapResponse(sessionMap)
+
+    case MemberUp(member) =>
+      if (member.hasRole("producer"))
+        sender() ! context.system.deadLetters
 
     case Terminated(tracker) =>
       sessionMap.collect { case (id, `tracker`) => id }.foreach(sessionMap -= _)
