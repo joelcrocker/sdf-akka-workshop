@@ -2,9 +2,15 @@ package com.boldradius.sdf.akka
 
 import akka.actor._
 import akka.testkit._
+import akka.pattern.ask
+import com.boldradius.sdf.akka.RequestConsumer.{SessionMapResponse, GetSessionMap}
+import org.scalatest.concurrent.ScalaFutures
+import scala.util.{ Success, Failure }
+import akka.util.Timeout
+
 import scala.concurrent.duration._
 
-class RequestConsumerSpec extends BaseAkkaSpec {
+class RequestConsumerSpec extends BaseAkkaSpec with ScalaFutures {
   "Sending Request to RequestConsumer" should {
     "result in logging" in {
       val consumer = system.actorOf(RequestConsumer.props(settings))
@@ -22,10 +28,14 @@ class RequestConsumerSpec extends BaseAkkaSpec {
   }
   "Multiple Requests to RequestConsumer" should {
     "only result in one SessionTracker" in {
+      implicit val timeout = Timeout(2 seconds)
       val consumer = TestActorRef(new RequestConsumer(settings))
       consumer ! Request(300L, System.currentTimeMillis(), "localhost", "google.com", "chrome")
       consumer ! Request(300L, System.currentTimeMillis(), "localhost", "google.com", "chrome")
-      consumer.underlyingActor.sessionMap.size shouldEqual 1
+      val response = (consumer ? GetSessionMap).mapTo[SessionMapResponse]
+      whenReady(response) {
+        case SessionMapResponse(sessionMap) => sessionMap.size shouldEqual 1
+      }
     }
   }
 }
