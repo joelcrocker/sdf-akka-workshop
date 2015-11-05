@@ -9,26 +9,33 @@ import scala.util.control.NonFatal
  */
 
 object StatsSupervisor {
-  def props() = Props(new StatsSupervisor())
+  val defaultMaxRetries: Int = 2
+  val defaultRetryTimeRange: Duration = 15 minutes
 
-  case class Alarm(msg: String, ex: Throwable)
+  def props(alerter: ActorRef,
+            maxRetries: Int = defaultMaxRetries,
+            retryTimeRange: Duration = defaultRetryTimeRange) = {
+    Props(new StatsSupervisor(alerter, maxRetries, retryTimeRange))
+  }
+
   case object GetStatsAggregator
   case class StatsAggregatorResponse(aggregator: ActorRef)
 }
 
-class StatsSupervisor extends Actor with ActorLogging {
+class StatsSupervisor(alerter: ActorRef,
+                      maxRetries: Int = StatsSupervisor.defaultMaxRetries,
+                      retryTimeRange: Duration = StatsSupervisor.defaultRetryTimeRange
+) extends Actor with ActorLogging {
   import StatsSupervisor._
 
   var lastThrowable: Option[Throwable] = None
   val statsAggregator = createStatsAggregator()
-//  val alerter = context.actorOf(Alerter.props)
-  val alerter = context.system.deadLetters
 
   context.watch(statsAggregator)
 
   def receive: Receive = {
     case Terminated(aggregator) =>
-      alerter ! Alarm(
+      alerter ! Alerter.Alarm(
         s"StatsAggregator $statsAggregator hit retry limit and has been stopped.",
         lastThrowable.get
       )
@@ -40,13 +47,13 @@ class StatsSupervisor extends Actor with ActorLogging {
   override val supervisorStrategy: SupervisorStrategy = {
     val decider: SupervisorStrategy.Decider = {
       case NonFatal(e) => {
-        println(s"Supervisor received throwable $e")
+        log.debug(s"Supervisor received throwable $e")
         lastThrowable = Some(e)
         SupervisorStrategy.Restart
       }
     }
     OneForOneStrategy(
-      maxNrOfRetries = 2, withinTimeRange = 15 minutes
+      maxNrOfRetries = maxRetries, withinTimeRange = retryTimeRange
     )(decider)
   }
 

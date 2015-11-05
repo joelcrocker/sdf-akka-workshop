@@ -13,8 +13,8 @@ object RequestConsumer {
 
 class RequestConsumer(val settings: Settings) extends Actor with ActorLogging with Stash {
   var sessionMap = Map.empty[Long, ActorRef]
-  val statsSupervisor = context.actorOf(StatsSupervisor.props)
-  statsSupervisor ! StatsSupervisor.GetStatsAggregator
+  val alerter = context.actorOf(Alerter.props)
+  val statsSupervisor = createStatsSupervisor()
 
   override def receive: Receive = {
     case StatsSupervisor.StatsAggregatorResponse(aggregator) =>
@@ -51,5 +51,15 @@ class RequestConsumer(val settings: Settings) extends Actor with ActorLogging wi
       id, inactivityDuration, statsAggregator), s"session-tracker-${id}")
     context.watch(tracker)
     tracker
+  }
+
+  def createStatsSupervisor(): ActorRef = {
+    val supervisor = context.actorOf(StatsSupervisor.props(
+      alerter,
+      settings.statsSupervisor.maxRetries,
+      settings.statsSupervisor.retryTimeRange
+    ))
+    supervisor ! StatsSupervisor.GetStatsAggregator
+    supervisor
   }
 }
