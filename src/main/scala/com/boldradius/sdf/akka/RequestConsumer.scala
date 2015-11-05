@@ -9,6 +9,7 @@ object RequestConsumer {
 
 class RequestConsumer(val settings: Settings) extends Actor with ActorLogging {
   var sessionMap = Map.empty[Long, ActorRef]
+  val statsAggregator = context.actorOf(StatsAggregator.props)
 
   def receive = {
     case request: Request =>
@@ -31,7 +32,7 @@ class RequestConsumer(val settings: Settings) extends Actor with ActorLogging {
 
   def createSessionTracker(id: Long, inactivityDuration: Duration): ActorRef = {
     val tracker = context.actorOf(SessionTracker.props(
-      id, inactivityDuration, context.system.deadLetters), s"session-tracker-${id}")
+      id, inactivityDuration, statsAggregator), s"session-tracker-${id}")
     context.watch(tracker)
     tracker
   }
