@@ -1,6 +1,7 @@
 package com.boldradius.sdf.akka.sim
 
 import akka.actor._
+import akka.cluster.ClusterEvent.MemberRemoved
 import com.boldradius.sdf.akka.sim.RequestProducer._
 
 import scala.concurrent.duration._
@@ -19,7 +20,9 @@ class RequestProducer(concurrentSessions:Int) extends Actor with ActorLogging {
   def receive: Receive = stopped
 
   def stopped: Receive = {
-    case Start(target) =>
+    case ConsumerRegistration(target) =>
+
+      log.info(s"Received registration for ${target.path}")
 
       // Move to a different state to avoid sending to more than one target
       context.become(producing)
@@ -34,9 +37,12 @@ class RequestProducer(concurrentSessions:Int) extends Actor with ActorLogging {
       checkSessions(target)
       context.system.scheduler.scheduleOnce(checkSessionInterval, self, CheckSessions(target))
 
-    case Stop =>
-      log.debug("Stopping simulation")
-      context.become(stopped)
+    case MemberRemoved(member, _) => {}
+      log.info(s"Received member remove for ${member.address}")
+      if (member.hasRole("consumer")) {
+        log.debug("Stopping simulation")
+        context.become(stopped)
+      }
   }
 
 
@@ -58,6 +64,7 @@ object RequestProducer {
 
   // Messaging protocol for the RequestProducer
   case class Start(target: ActorRef)
+  case class ConsumerRegistration(target: ActorRef)
   case object Stop
   case class CheckSessions(target: ActorRef)
 

@@ -2,7 +2,7 @@ package com.boldradius.sdf.akka
 
 import akka.actor.ActorSystem
 import akka.cluster.Cluster
-import akka.cluster.ClusterEvent.ClusterDomainEvent
+import akka.cluster.ClusterEvent.MemberRemoved
 import com.boldradius.sdf.akka.sim.RequestProducer
 import com.typesafe.config.ConfigFactory
 
@@ -14,5 +14,5 @@ object RequestProducerApp extends App {
 
   val clusterListener = system.actorOf(RequestProducer.props(100), "producer")
 
-  Cluster(system).subscribe(clusterListener, classOf[ClusterDomainEvent])
+  Cluster(system).subscribe(clusterListener, classOf[MemberRemoved])
 }
