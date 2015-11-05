@@ -4,28 +4,19 @@ import akka.actor._
 import scala.concurrent.duration._
 import scala.util.control.NonFatal
 
-/**
- * Created by lexcellent on 11/5/15.
- */
 
 object StatsSupervisor {
-  val defaultMaxRetries: Int = 2
-  val defaultRetryTimeRange: Duration = 15 minutes
-
-  def props(alerter: ActorRef,
-            maxRetries: Int = defaultMaxRetries,
-            retryTimeRange: Duration = defaultRetryTimeRange) = {
-    Props(new StatsSupervisor(alerter, maxRetries, retryTimeRange))
+  def props(alerter: ActorRef, settings: Settings) = {
+    Props(new StatsSupervisor(alerter, settings))
   }
 
   case object GetStatsAggregator
   case class StatsAggregatorResponse(aggregator: ActorRef)
 }
 
-class StatsSupervisor(alerter: ActorRef,
-                      maxRetries: Int = StatsSupervisor.defaultMaxRetries,
-                      retryTimeRange: Duration = StatsSupervisor.defaultRetryTimeRange
-) extends Actor with ActorLogging {
+class StatsSupervisor(alerter: ActorRef, settings: Settings)
+  extends Actor with ActorLogging
+{
   import StatsSupervisor._
 
   var lastThrowable: Option[Throwable] = None
@@ -53,10 +44,11 @@ class StatsSupervisor(alerter: ActorRef,
       }
     }
     OneForOneStrategy(
-      maxNrOfRetries = maxRetries, withinTimeRange = retryTimeRange
+      maxNrOfRetries = settings.statsSupervisor.maxRetries,
+      withinTimeRange = settings.statsSupervisor.retryTimeRange
     )(decider)
   }
 
   def createStatsAggregator(): ActorRef =
-    context.actorOf(StatsAggregator.props)
+    context.actorOf(StatsAggregator.props(settings), "stats-aggregator")
 }

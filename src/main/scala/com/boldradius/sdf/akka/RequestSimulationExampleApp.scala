@@ -14,15 +14,15 @@ object  RequestSimulationExampleApp extends App {
   val simulationApp = new RequestSimulationExampleApp(system)
 
   // Wait for the user to hit <enter>
-  println("Hit <enter> to stop the simulation")
-  StdIn.readLine()
-
-
-  simulationApp.stop()
-
-  // Terminate all actors and wait for graceful shutdown
-  system.shutdown()
-  system.awaitTermination(10 seconds)
+//  println("Hit <enter> to stop the simulation")
+//  StdIn.readLine()
+//
+//
+//  simulationApp.stop()
+//
+//  // Terminate all actors and wait for graceful shutdown
+//  system.shutdown()
+//  system.awaitTermination(10 seconds)
 }
 
 

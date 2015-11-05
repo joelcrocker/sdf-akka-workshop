@@ -54,11 +54,7 @@ class RequestConsumer(val settings: Settings) extends Actor with ActorLogging wi
   }
 
   def createStatsSupervisor(): ActorRef = {
-    val supervisor = context.actorOf(StatsSupervisor.props(
-      alerter,
-      settings.statsSupervisor.maxRetries,
-      settings.statsSupervisor.retryTimeRange
-    ))
+    val supervisor = context.actorOf(StatsSupervisor.props(alerter, settings))
     supervisor ! StatsSupervisor.GetStatsAggregator
     supervisor
   }

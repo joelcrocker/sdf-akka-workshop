@@ -4,7 +4,11 @@ version := "1.0"
 
 scalaVersion := "2.11.7"
 
-fork in Test := true
+fork in Test := false
+
+parallelExecution in Test := false
+
+fork in run := true
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor"      % "2.3.14",

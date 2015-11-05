@@ -2,6 +2,7 @@ package com.boldradius.sdf.akka
 
 import akka.actor._
 import java.sql.Timestamp
+import akka.persistence.{SnapshotOffer, PersistentActor}
 
 
 object StatsAggregator {
@@ -29,9 +30,11 @@ object StatsAggregator {
   
   case object GetTopReferrers
   case class ResTopReferrers(urlsWithCount: Seq[(String, Long)])
+
+  case object SelfShot
   
   
-  def props = Props(new StatsAggregator)
+  def props(settings: Settings) = Props(new StatsAggregator(settings))
 
   // Internal state
   case class BrowserStats(requests: Map[String, Long], users: Map[String, Long]) {
@@ -162,51 +165,88 @@ object StatsAggregator {
     val (minute, count) = requestsByMinute.maxBy { case (minute, count) => count }
     ResBusiestMinute(minute.toInt, count)
   }
+  
+  case class StatsData(
+    requestsPerMinute: Map[Long, Long],
+    browserStats: BrowserStats,
+    urlVisitDurationStats: Map[String, UrlVisitStats],
+    urlDistributionStats: UrlStats,
+    urlLandingStats: UrlStats,
+    urlSinkStats: UrlStats,
+    referrerStats: ReferrerStats           
+  )
 }
 
-class StatsAggregator extends Actor with ActorLogging {
+class StatsAggregator(settings: Settings) extends PersistentActor with ActorLogging {
   import StatsAggregator._
+  override def persistenceId: String = self.path.name
 
-  var requestsPerMinute = Map[Long, Long]()
-  var browserStats = BrowserStats(Map.empty, Map.empty)
-  var urlVisitDurationStats = Map.empty[String, UrlVisitStats]
-  var urlDistributionStats = UrlStats(Map.empty)
-  var urlLandingStats = UrlStats(Map.empty)
-  var urlSinkStats = UrlStats(Map.empty)
-  var referrerStats = ReferrerStats(Map.empty)
+  var statsData = StatsData(
+    requestsPerMinute = Map[Long, Long](),
+    browserStats = BrowserStats(Map.empty, Map.empty),
+    urlVisitDurationStats = Map.empty[String, UrlVisitStats],
+    urlDistributionStats = UrlStats(Map.empty),
+    urlLandingStats = UrlStats(Map.empty),
+    urlSinkStats = UrlStats(Map.empty),
+    referrerStats = ReferrerStats(Map.empty)
+  )
+  def updateData(sessionStats: SessionTracker.SessionStats): Unit = {
+    val history = sessionStats.requestHistory
+    statsData = StatsData(
+        browserStats = statsPerBrowser(statsData.browserStats, history),
+        requestsPerMinute = updatedRequestsPerMinute(statsData.requestsPerMinute, history),
+        urlDistributionStats = countByPage(statsData.urlDistributionStats, history),
+        urlVisitDurationStats = statsVisitsPerUrl(statsData.urlVisitDurationStats, history),
+        urlLandingStats = countPerLanding(statsData.urlLandingStats, history),
+        urlSinkStats = countPerSink(statsData.urlSinkStats, history),
+        referrerStats = statsPerReferrer(statsData.referrerStats, history)
+      )
+  }
 
-  def receive = {
-    case SessionTracker.SessionStats(sessionId, history) =>
-      browserStats = statsPerBrowser(browserStats, history)
-      requestsPerMinute = updatedRequestsPerMinute(requestsPerMinute, history)
-      urlDistributionStats = countByPage(urlDistributionStats, history)
-      urlVisitDurationStats = statsVisitsPerUrl(urlVisitDurationStats, history)
-      urlLandingStats = countPerLanding(urlLandingStats, history)
-      urlSinkStats = countPerSink(urlSinkStats, history)
-      referrerStats = statsPerReferrer(referrerStats, history)
+  override def receiveRecover: Receive = {
+    case sessionStats: SessionTracker.SessionStats =>
+      updateData(sessionStats)
+
+    case SnapshotOffer(_, snapshot: StatsData) =>
+      statsData = snapshot
+  }
+
+  var eventCount = 0
+  override def receiveCommand: Receive = {
+    case sessionStats: SessionTracker.SessionStats =>
+      log.info(s"Processing stats for ${sessionStats.sessionId}")
+      persist(sessionStats)(updateData)
+      eventCount += 1
+      self ! SelfShot
+
+    case SelfShot =>
+      if (eventCount >= settings.statsAggregator.snapshotInterval) {
+        eventCount = 0
+        saveSnapshot(statsData)
+      }
 
     case GetNumberOfRequestsPerBrowser =>
-      sender() ! ResNumberOfRequestsPerBrowser(browserStats.requests)
+      sender() ! ResNumberOfRequestsPerBrowser(statsData.browserStats.requests)
 
     case GetBusiestMinute =>
-      sender() ! busiestMinute(requestsPerMinute)
+      sender() ! busiestMinute(statsData.requestsPerMinute)
 
     case GetPageVisitDistribution =>
-      sender() ! ResPageVisitDistribution(urlDistributionStats.distribution)
+      sender() ! ResPageVisitDistribution(statsData.urlDistributionStats.distribution)
 
     case GetAverageVisitTimePerUrl =>
-      sender() ! ResAverageVisitTimePerUrl(urlVisitDurationStats.mapValues(_.average))
+      sender() ! ResAverageVisitTimePerUrl(statsData.urlVisitDurationStats.mapValues(_.average))
 
     case GetTopLandingPages =>
-      sender() ! ResTopLandingPages(urlLandingStats.topByCount(3))
+      sender() ! ResTopLandingPages(statsData.urlLandingStats.topByCount(3))
 
     case GetTopSinkPages =>
-      sender() ! ResTopSinkPages(urlSinkStats.topByCount(3))
+      sender() ! ResTopSinkPages(statsData.urlSinkStats.topByCount(3))
 
     case GetTopBrowsers =>
-      sender() ! ResTopBrowsers(browserStats.topBrowsers(2))
+      sender() ! ResTopBrowsers(statsData.browserStats.topBrowsers(2))
 
     case GetTopReferrers =>
-      sender() ! ResTopReferrers(referrerStats.topReferrers(2))
+      sender() ! ResTopReferrers(statsData.referrerStats.topReferrers(2))
   }
 }
