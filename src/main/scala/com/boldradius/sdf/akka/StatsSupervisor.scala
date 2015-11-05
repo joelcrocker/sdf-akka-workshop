@@ -11,7 +11,6 @@ import scala.util.control.NonFatal
 object StatsSupervisor {
   def props() = Props(new StatsSupervisor())
 
-  case class Alarm(msg: String, ex: Throwable)
   case object GetStatsAggregator
   case class StatsAggregatorResponse(aggregator: ActorRef)
 }
@@ -21,14 +20,13 @@ class StatsSupervisor extends Actor with ActorLogging {
 
   var lastThrowable: Option[Throwable] = None
   val statsAggregator = createStatsAggregator()
-//  val alerter = context.actorOf(Alerter.props)
-  val alerter = context.system.deadLetters
+  val alerter = context.actorOf(Alerter.props)
 
   context.watch(statsAggregator)
 
   def receive: Receive = {
     case Terminated(aggregator) =>
-      alerter ! Alarm(
+      alerter ! Alerter.Alarm(
         s"StatsAggregator $statsAggregator hit retry limit and has been stopped.",
         lastThrowable.get
       )
@@ -40,7 +38,7 @@ class StatsSupervisor extends Actor with ActorLogging {
   override val supervisorStrategy: SupervisorStrategy = {
     val decider: SupervisorStrategy.Decider = {
       case NonFatal(e) => {
-        println(s"Supervisor received throwable $e")
+        log.debug(s"Supervisor received throwable $e")
         lastThrowable = Some(e)
         SupervisorStrategy.Restart
       }
