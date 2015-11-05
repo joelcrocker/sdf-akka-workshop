@@ -1,3 +1,7 @@
+
+journal/
+snapshots/
+
 *.class
 *.log
 

@@ -15,6 +15,11 @@ class Settings(config: Config = ConfigFactory.load()) {
     }
   }
 
+  object statsAggregator {
+    val snapshotInterval: Int = appConfig.getInt("stats-aggregator.snapshot-interval")
+  }
+
   // Init objects
   sessionTracker
+  statsAggregator
 }

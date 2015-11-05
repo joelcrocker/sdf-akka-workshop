@@ -6,6 +6,8 @@ scalaVersion := "2.11.7"
 
 fork in Test := true
 
+fork in run := true
+
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor"      % "2.3.14",
   "com.typesafe.akka" %% "akka-testkit"    % "2.3.14" % "test",
