@@ -158,7 +158,9 @@ class StatsAggregatorMessageSpec extends TestKit(ActorSystem()) with ImplicitSen
 {
   val settings = new Settings()
   override def beforeAll(): Unit = {
-    File("target/test-snapshot").deleteRecursively()
+    val config = system.settings.config
+    File(config.getString("akka.persistence.journal.leveldb.dir")).deleteRecursively()
+    File(config.getString("akka.persistence.snapshot-store.local.dir")).deleteRecursively()
   }
   override def afterAll(): Unit = {
     shutdown()
@@ -284,7 +286,9 @@ class StatsAggregatorPersistenceSpec extends TestKit(ActorSystem()) with Implici
   with WordSpecLike with Matchers with Inspectors with BeforeAndAfterAll
 {
   override def beforeAll(): Unit = {
-    File("target/test-snapshot").deleteRecursively()
+    val config = system.settings.config
+    File(config.getString("akka.persistence.journal.leveldb.dir")).deleteRecursively()
+    File(config.getString("akka.persistence.snapshot-store.local.dir")).deleteRecursively()
   }
   override def afterAll(): Unit = {
     shutdown()

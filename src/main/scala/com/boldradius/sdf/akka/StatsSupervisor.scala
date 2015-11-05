@@ -4,9 +4,6 @@ import akka.actor._
 import scala.concurrent.duration._
 import scala.util.control.NonFatal
 
-/**
- * Created by lexcellent on 11/5/15.
- */
 
 object StatsSupervisor {
   def props(alerter: ActorRef, settings: Settings) = {
