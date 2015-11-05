@@ -16,6 +16,10 @@ class Settings(config: Config = ConfigFactory.load()) {
     }
   }
 
+  object statsAggregator {
+    val snapshotInterval: Int = appConfig.getInt("stats-aggregator.snapshot-interval")
+  }
+
   object statsSupervisor {
     val maxRetries: Int = { appConfig.getInt("stats-supervisor.max-retries") }
     val retryTimeRange: Duration = {
@@ -25,5 +29,6 @@ class Settings(config: Config = ConfigFactory.load()) {
 
   // Init objects
   sessionTracker
+  statsAggregator
   statsSupervisor
 }
