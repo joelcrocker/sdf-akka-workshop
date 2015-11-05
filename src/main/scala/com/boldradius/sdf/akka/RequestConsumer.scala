@@ -7,13 +7,13 @@ import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
 
 object RequestConsumer {
-  def props(settings: Settings) = Props(new RequestConsumer(settings))
+  def props(settings: ConsumerSettings) = Props(new RequestConsumer(settings))
 
   case object GetSessionMap
   case class SessionMapResponse(sessionMap: Map[Long, ActorRef])
 }
 
-class RequestConsumer(val settings: Settings) extends Actor with ActorLogging with Stash {
+class RequestConsumer(val settings: ConsumerSettings) extends Actor with ActorLogging with Stash {
   var sessionMap = Map.empty[Long, ActorRef]
   val alerter = context.actorOf(Alerter.props)
   val statsSupervisor = createStatsSupervisor()

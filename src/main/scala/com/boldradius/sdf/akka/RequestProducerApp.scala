@@ -10,8 +10,6 @@ object RequestProducerApp extends App {
 
   val config = ConfigFactory.load("requestproducer")
 
-  System.setProperty("akka.remote.netty.tcp.port", "2551")
-
   val system = ActorSystem("EventCluster", config)
 
   val clusterListener = system.actorOf(RequestProducer.props(100), "producer")

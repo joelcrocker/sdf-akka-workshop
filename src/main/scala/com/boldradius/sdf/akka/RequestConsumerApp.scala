@@ -9,12 +9,11 @@ import com.typesafe.config.ConfigFactory
 object RequestConsumerApp extends App {
 
   val config = ConfigFactory.load("requestconsumer")
-
-  System.setProperty("akka.remote.netty.tcp.port", "2552")
+  val settings = new ConsumerSettings(config)
 
   val system = ActorSystem("EventCluster", config)
 
-  val clusterListener = system.actorOf(RequestConsumer.props(), "consumer")
+  val clusterListener = system.actorOf(RequestConsumer.props(settings), "consumer")
 
   Cluster(system).subscribe(clusterListener, classOf[ClusterDomainEvent])
 }

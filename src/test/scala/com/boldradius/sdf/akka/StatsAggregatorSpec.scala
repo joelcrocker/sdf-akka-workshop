@@ -154,7 +154,7 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
 class StatsAggregatorMessageSpec extends TestKit(ActorSystem()) with ImplicitSender
   with WordSpecLike with Matchers with Inspectors with BeforeAndAfterAll
 {
-  val settings = new Settings()
+  val settings = new ConsumerSettings()
   override def beforeAll(): Unit = {
     File("target/test-snapshot").deleteRecursively()
   }

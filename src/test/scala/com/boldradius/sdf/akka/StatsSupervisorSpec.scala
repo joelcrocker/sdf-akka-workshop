@@ -22,7 +22,7 @@ class SimStatsAggregator extends Actor with ActorLogging {
 
 class StatsSupervisorSpec extends BaseAkkaSpec with ScalaFutures {
 
-  override val settings = new Settings(ConfigFactory.parseMap(
+  override val settings = new ConsumerSettings(ConfigFactory.parseMap(
     Map("web-stats.stats-supervisor.max-retries" -> "2")
   ).withFallback(ConfigFactory.load()))
   assert(settings.statsSupervisor.maxRetries == 2)

@@ -9,7 +9,7 @@ import scala.util.control.NonFatal
  */
 
 object StatsSupervisor {
-  def props(alerter: ActorRef, settings: Settings) = {
+  def props(alerter: ActorRef, settings: ConsumerSettings) = {
     Props(new StatsSupervisor(alerter, settings))
   }
 
@@ -17,7 +17,7 @@ object StatsSupervisor {
   case class StatsAggregatorResponse(aggregator: ActorRef)
 }
 
-class StatsSupervisor(alerter: ActorRef, settings: Settings)
+class StatsSupervisor(alerter: ActorRef, settings: ConsumerSettings)
   extends Actor with ActorLogging
 {
   import StatsSupervisor._
