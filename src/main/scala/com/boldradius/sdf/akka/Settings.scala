@@ -6,6 +6,7 @@ import scala.concurrent.duration._
 
 
 class Settings(config: Config = ConfigFactory.load()) {
+
   config.checkValid(ConfigFactory.defaultReference(), "web-stats")
   protected val appConfig = config.getConfig("web-stats")
 
