@@ -212,6 +212,7 @@ class StatsAggregator(settings: Settings) extends PersistentActor with ActorLogg
   var eventCount = 0
   override def receiveCommand: Receive = {
     case sessionStats: SessionTracker.SessionStats =>
+      log.info(s"Processing stats for ${sessionStats.sessionId}")
       persist(sessionStats)(updateData)
       eventCount += 1
       if (eventCount >= settings.statsAggregator.snapshotInterval) {

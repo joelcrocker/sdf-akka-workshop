@@ -53,5 +53,5 @@ class StatsSupervisor(alerter: ActorRef, settings: Settings)
   }
 
   def createStatsAggregator(): ActorRef =
-    context.actorOf(StatsAggregator.props(settings))
+    context.actorOf(StatsAggregator.props(settings), "stats-aggregator")
 }

@@ -13,7 +13,7 @@ class SessionTracker(sessionId: Long, inactivityTimeout: Duration, statsCollecto
 
   def receive = {
     case req: Request if sessionId == req.sessionId =>
-      log.info("SessionTracker with id {} has received request {}", sessionId, req.toString)
+      log.debug("SessionTracker with id {} has received request {}", sessionId, req.toString)
       history :+= req
 
     case ReceiveTimeout =>
