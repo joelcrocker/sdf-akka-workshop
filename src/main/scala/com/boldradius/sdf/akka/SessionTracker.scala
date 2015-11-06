@@ -20,6 +20,9 @@ class SessionTracker(sessionId: Long, inactivityTimeout: Duration, statsCollecto
       log.info(s"Session inactive: $sessionId")
       statsCollector ! SessionStats(sessionId, history)
       context.stop(self)
+
+    case GetSessionStats =>
+      sender ! SessionStats(sessionId, history)
   }
 }
 
@@ -28,4 +31,5 @@ object SessionTracker {
     Props(new SessionTracker(sessionId, inactivityTimeout, statsCollector))
 
   case class SessionStats(sessionId: Long, requestHistory: Seq[Request])
+  case object GetSessionStats
 }
