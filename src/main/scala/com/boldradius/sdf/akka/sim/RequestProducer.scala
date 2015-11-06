@@ -55,7 +55,6 @@ class RequestProducer(concurrentSessions:Int) extends Actor with ActorLogging {
 object RequestProducer {
 
   // Messaging protocol for the RequestProducer
-  case class Start(target: ActorRef)
   case class ConsumerRegistration(target: ActorRef)
   case object Stop
   case class CheckSessions(target: ActorRef)

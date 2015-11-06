@@ -2,8 +2,6 @@ package com.boldradius.sdf.akka
 
 import akka.actor._
 import com.boldradius.sdf.akka.sim._
-import scala.io.StdIn
-import scala.concurrent.duration._
 
 
 object  RequestSimulationExampleApp extends App {
@@ -23,7 +21,7 @@ class RequestSimulationExampleApp(system:ActorSystem){
   val consumer = system.actorOf(RequestConsumer.props(settings), "consumer")
 
   // Tell the producer to start working and to send messages to the consumer
-  producer ! RequestProducer.Start(consumer)
+  producer ! RequestProducer.ConsumerRegistration(consumer)
 
   def stop() = {
     // Tell the producer to stop working
