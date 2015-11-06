@@ -6,6 +6,7 @@ import com.typesafe.config.ConfigFactory
 import org.scalatest._
 import scala.concurrent.duration._
 import scala.reflect.io.File
+import scala.collection.JavaConversions._
 
 class StatsAggregatorSpec extends BaseAkkaSpec {
 
@@ -158,7 +159,9 @@ class StatsAggregatorMessageSpec extends TestKit(ActorSystem()) with ImplicitSen
   val config = ConfigFactory.load()
   val settings = new ConsumerSettings(config)
   override def beforeAll(): Unit = {
-    File("target/test-snapshot").deleteRecursively()
+    val config = system.settings.config
+    File(config.getString("akka.persistence.journal.leveldb.dir")).deleteRecursively()
+    File(config.getString("akka.persistence.snapshot-store.local.dir")).deleteRecursively()
   }
   override def afterAll(): Unit = {
     shutdown()
@@ -276,6 +279,82 @@ class StatsAggregatorMessageSpec extends TestKit(ActorSystem()) with ImplicitSen
       ))
       aggregator ! GetTopReferrers
       expectMsg(ResTopReferrers(Seq("google.com" -> 3, "google.ca" -> 2)))
+    }
+  }
+}
+
+class StatsAggregatorPersistenceSpec extends TestKit(ActorSystem()) with ImplicitSender
+  with WordSpecLike with Matchers with Inspectors with BeforeAndAfterAll
+{
+  override def beforeAll(): Unit = {
+    val config = system.settings.config
+    File(config.getString("akka.persistence.journal.leveldb.dir")).deleteRecursively()
+    File(config.getString("akka.persistence.snapshot-store.local.dir")).deleteRecursively()
+  }
+  override def afterAll(): Unit = {
+    shutdown()
+  }
+  def uniqueName(): String = {
+    System.identityHashCode(this) + "-" +
+      Thread.currentThread().getId.toString + "-" +
+      System.nanoTime().toString
+  }
+  def mkAggregatorActor(name: String): ActorRef = {
+    system.actorOf(StatsAggregator.props(settings), name)
+  }
+  val settings = new Settings(ConfigFactory.parseMap(
+    Map("web-stats.stats-aggregator.snapshot-interval" -> "2")
+  ).withFallback(ConfigFactory.load()))
+  assert(settings.statsAggregator.snapshotInterval == 2)
+
+  "StatsAggregator persistent actor" should {
+    import StatsAggregator._
+    val sessionId = 100L
+
+    "start with empty state when run the first time" in {
+      val aggregator = mkAggregatorActor(uniqueName())
+      aggregator ! GetNumberOfRequestsPerBrowser
+      expectMsg(ResNumberOfRequestsPerBrowser(Map.empty))
+    }
+
+    "reload state from journal on startup" in {
+      val persistentName = uniqueName()
+      val aggregator = mkAggregatorActor(persistentName)
+      aggregator ! SessionTracker.SessionStats(sessionId, Seq(
+        RequestFactory.random(sessionId, 10).copy(browser = "chrome")
+      ))
+      aggregator ! GetNumberOfRequestsPerBrowser
+      expectMsg(ResNumberOfRequestsPerBrowser(Map("chrome" -> 1L)))
+      watch(aggregator)
+      system.stop(aggregator)
+      expectTerminated(aggregator)
+
+      val newAggregator = mkAggregatorActor(persistentName)
+      newAggregator ! GetNumberOfRequestsPerBrowser
+      expectMsg(ResNumberOfRequestsPerBrowser(Map("chrome" -> 1L)))
+    }
+
+    "reload state from snapshot on startup" in {
+      val persistentName = uniqueName()
+      val aggregator = mkAggregatorActor(persistentName)
+      aggregator ! SessionTracker.SessionStats(sessionId, Seq(
+        RequestFactory.random(sessionId, 10).copy(browser = "chrome")
+      ))
+      aggregator ! SessionTracker.SessionStats(sessionId, Seq(
+        RequestFactory.random(sessionId + 1, 10).copy(browser = "chrome")
+      ))
+      aggregator ! SessionTracker.SessionStats(sessionId, Seq(
+        RequestFactory.random(sessionId + 2, 10).copy(browser = "chrome")
+      ))
+      aggregator ! GetNumberOfRequestsPerBrowser
+      expectMsg(ResNumberOfRequestsPerBrowser(Map("chrome" -> 3L)))
+      watch(aggregator)
+      system.stop(aggregator)
+      expectTerminated(aggregator)
+
+      val newAggregator = mkAggregatorActor(persistentName)
+      newAggregator ! GetNumberOfRequestsPerBrowser
+      expectMsg(ResNumberOfRequestsPerBrowser(Map("chrome" -> 3L)))
     }
   }
 }

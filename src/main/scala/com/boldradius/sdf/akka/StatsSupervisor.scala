@@ -4,9 +4,6 @@ import akka.actor._
 import scala.concurrent.duration._
 import scala.util.control.NonFatal
 
-/**
- * Created by lexcellent on 11/5/15.
- */
 
 object StatsSupervisor {
   def props(alerter: ActorRef, settings: ConsumerSettings) = {
@@ -53,5 +50,5 @@ class StatsSupervisor(alerter: ActorRef, settings: ConsumerSettings)
   }
 
   def createStatsAggregator(): ActorRef =
-    context.actorOf(StatsAggregator.props(settings))
+    context.actorOf(StatsAggregator.props(settings), "stats-aggregator")
 }

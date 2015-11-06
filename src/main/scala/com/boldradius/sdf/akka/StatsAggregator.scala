@@ -30,6 +30,8 @@ object StatsAggregator {
   
   case object GetTopReferrers
   case class ResTopReferrers(urlsWithCount: Seq[(String, Long)])
+
+  case object SelfShot
   
   
   def props(settings: ConsumerSettings) = Props(new StatsAggregator(settings))
@@ -212,9 +214,13 @@ class StatsAggregator(settings: ConsumerSettings) extends PersistentActor with A
   var eventCount = 0
   override def receiveCommand: Receive = {
     case sessionStats: SessionTracker.SessionStats =>
+      log.info(s"Processing stats for ${sessionStats.sessionId}")
       persist(sessionStats)(updateData)
       eventCount += 1
-      if (eventCount == settings.statsAggregator.snapshotInterval) {
+      self ! SelfShot
+
+    case SelfShot =>
+      if (eventCount >= settings.statsAggregator.snapshotInterval) {
         eventCount = 0
         saveSnapshot(statsData)
       }
