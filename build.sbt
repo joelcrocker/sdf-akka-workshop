@@ -22,3 +22,5 @@ libraryDependencies ++= Seq(
   "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8",
   "com.typesafe.akka" %% "akka-cluster" % "2.3.14"
 )
+
+cancelable in Global := true
