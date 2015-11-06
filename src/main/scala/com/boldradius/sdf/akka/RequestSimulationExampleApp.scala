@@ -19,6 +19,8 @@ class RequestSimulationExampleApp(system:ActorSystem){
 
   val producer = system.actorOf(RequestProducer.props(100), "producer")
   val consumer = system.actorOf(RequestConsumer.props(settings), "consumer")
+  val querier = system.actorOf(RTStatsQuerier.props(consumer), "rtstats-querier")
+  val rtStatsPoller = system.actorOf(RTStatsPoller.props(querier), "rtstats-poller")
 
   // Tell the producer to start working and to send messages to the consumer
   producer ! RequestProducer.ConsumerRegistration(consumer)

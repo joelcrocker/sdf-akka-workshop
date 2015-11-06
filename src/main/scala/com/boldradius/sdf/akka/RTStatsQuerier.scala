@@ -4,7 +4,7 @@ import akka.actor._
 
 object RTStatsQuerier {
 
-  def props(consumer: ActorRef) = Props(new RTStatsWorker(consumer))
+  def props(consumer: ActorRef) = Props(new RTStatsQuerier(consumer))
 
   sealed trait RTStatsRequest
   sealed class FieldCountResponse(fieldSessions: Map[String, Long])
