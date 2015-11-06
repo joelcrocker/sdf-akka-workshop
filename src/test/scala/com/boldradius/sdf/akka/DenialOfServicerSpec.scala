@@ -1,5 +1,6 @@
 package com.boldradius.sdf.akka
 
+import akka.actor.Props
 import akka.testkit._
 import scala.concurrent.duration._
 
@@ -11,6 +12,9 @@ class DenialOfServicerSpec extends BaseAkkaSpec {
   class TestDenialOfServicer(settings: DosSettings) extends DenialOfServicer(settings) {
     override def newRequest(session: sim.Session): Request = testRequest
   }
+  object TestDenialOfServicer {
+    def props(settings: DosSettings) = Props(new TestDenialOfServicer(settings))
+  }
 
   "DenialOfServicer actor" should {
     "Send requests " in {
@@ -18,7 +22,7 @@ class DenialOfServicerSpec extends BaseAkkaSpec {
       val dosSettings = new DosSettings(config)
 
       val consumerProbe = TestProbe()
-      val doser =  TestActorRef(new TestDenialOfServicer(dosSettings))
+      val doser = system.actorOf(TestDenialOfServicer.props(dosSettings), "dos")
 
       // pass that to DOSer w/ Start message
       doser ! DenialOfServicer.Start(consumerProbe.ref)
