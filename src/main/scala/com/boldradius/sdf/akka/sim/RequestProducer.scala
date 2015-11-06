@@ -1,9 +1,7 @@
 package com.boldradius.sdf.akka.sim
 
 import akka.actor._
-import akka.cluster.ClusterEvent.MemberRemoved
 import com.boldradius.sdf.akka.sim.RequestProducer._
-
 import scala.concurrent.duration._
 
 /**
@@ -36,13 +34,7 @@ class RequestProducer(concurrentSessions:Int) extends Actor with ActorLogging {
       // Check if more sessions need to be created, and schedule the next check
       checkSessions(target)
       context.system.scheduler.scheduleOnce(checkSessionInterval, self, CheckSessions(target))
-
-    case MemberRemoved(member, _) =>
-      log.info(s"Received member remove for ${member.address}")
-      if (member.hasRole("consumer")) {
-        log.debug("Stopping simulation")
-        context.become(stopped)
-      }
+    //case Stop(target) =>
   }
 
 
@@ -63,7 +55,6 @@ class RequestProducer(concurrentSessions:Int) extends Actor with ActorLogging {
 object RequestProducer {
 
   // Messaging protocol for the RequestProducer
-  case class Start(target: ActorRef)
   case class ConsumerRegistration(target: ActorRef)
   case object Stop
   case class CheckSessions(target: ActorRef)
