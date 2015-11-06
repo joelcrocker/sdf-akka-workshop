@@ -27,6 +27,10 @@ class ConsumerSettings(config: Config = ConfigFactory.load()) {
     }
   }
 
+  object throttler {
+    val requestsPerSecond: Int = appConfig.getInt("throttler.requests-per-second")
+  }
+
   // Init objects
   sessionTracker
   statsAggregator
