@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
 import scala.concurrent.duration._
 
 
-class ConsumerSettings(config: Config) {
+class ConsumerSettings(config: Config = ConfigFactory.load()) {
 
   config.checkValid(ConfigFactory.defaultReference(), "web-stats")
   protected val appConfig = config.getConfig("web-stats")
