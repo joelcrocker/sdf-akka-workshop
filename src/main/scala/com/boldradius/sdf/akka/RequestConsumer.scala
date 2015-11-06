@@ -1,8 +1,6 @@
 package com.boldradius.sdf.akka
 
 import akka.actor._
-import akka.cluster.Cluster
-import akka.cluster.ClusterEvent._
 import com.boldradius.sdf.akka.RequestConsumer.{GetSessionMap, SessionMapResponse}
 import scala.concurrent.duration._
 
@@ -17,14 +15,6 @@ class RequestConsumer(val settings: ConsumerSettings) extends Actor with ActorLo
   var sessionMap = Map.empty[Long, ActorRef]
   val alerter = context.actorOf(Alerter.props)
   val statsSupervisor = createStatsSupervisor()
-
-  val cluster = Cluster(context.system)
-
-  override def preStart(): Unit = {
-    cluster.subscribe(self, initialStateMode = InitialStateAsEvents, classOf[MemberEvent], classOf[UnreachableMember])
-  }
-
-  override def postStop(): Unit = cluster.unsubscribe(self)
 
   override def receive: Receive = {
     case StatsSupervisor.StatsAggregatorResponse(aggregator) =>
