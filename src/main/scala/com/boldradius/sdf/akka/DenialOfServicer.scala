@@ -9,9 +9,8 @@ import scala.util.Random
 
 object DenialOfServicer {
   def props(settings: DosSettings) = Props(new DenialOfServicer(settings))
-  case class Start(dosTarget: ActorSelection)
+  case class Start(dosTarget: ActorRef)
   case object SendOnce
-
 }
 
 class DosSession(maxId: Long) extends sim.Session {
@@ -25,6 +24,8 @@ class DenialOfServicer(settings: DosSettings) extends Actor with ActorLogging{
 
   import context.dispatcher
 
+  def newRequest(session: sim.Session): Request = session.request
+
   override def receive: Receive = {
     case Start(dosTarget) =>
       log.info(s"Received a Start message with param ${dosTarget}")
@@ -33,11 +34,11 @@ class DenialOfServicer(settings: DosSettings) extends Actor with ActorLogging{
       context.become(dosing(dosTarget))
   }
 
-  def dosing(dosTarget: ActorSelection): Receive = {
+  def dosing(dosTarget: ActorRef): Receive = {
     case SendOnce => {
       //log.info(s"About to send a DOS message to ${dosTarget}")
       val newSession = new DosSession(settings.sessionIdMax)
-      dosTarget ! newSession.request
+      dosTarget ! newRequest(newSession)
       context.system.scheduler.scheduleOnce(settings.frequency, self, SendOnce)
     }
   }

@@ -3,10 +3,10 @@ package com.boldradius.sdf.akka
 import akka.actor._
 import akka.testkit._
 import akka.pattern.ask
+import akka.util.Timeout
 import com.boldradius.sdf.akka.RequestConsumer.{SessionMapResponse, GetSessionMap}
 import org.scalatest.concurrent.ScalaFutures
 import scala.util.{ Success, Failure }
-import akka.util.Timeout
 
 import scala.concurrent.duration._
 
