@@ -40,6 +40,7 @@ class RTStatsWorker(consumer: ActorRef) extends Actor with ActorLogging with Sta
   def ready(sessionMap: Map[Long, ActorRef]): Receive = {
     case GetTotalSessionCount =>
       sender ! TotalSessionCount(sessionMap.size)
+      context.stop(self)
 
     case msg @ GetSessionCountPerUrl =>
       val collectingState = CollectingState(sender(), sessionMap, SessionCountPerUrl)
