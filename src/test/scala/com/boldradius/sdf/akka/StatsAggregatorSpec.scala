@@ -302,7 +302,7 @@ class StatsAggregatorPersistenceSpec extends TestKit(ActorSystem()) with Implici
   def mkAggregatorActor(name: String): ActorRef = {
     system.actorOf(StatsAggregator.props(settings), name)
   }
-  val settings = new Settings(ConfigFactory.parseMap(
+  val settings = new ConsumerSettings(ConfigFactory.parseMap(
     Map("web-stats.stats-aggregator.snapshot-interval" -> "2")
   ).withFallback(ConfigFactory.load()))
   assert(settings.statsAggregator.snapshotInterval == 2)
