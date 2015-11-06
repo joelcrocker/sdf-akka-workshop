@@ -23,13 +23,14 @@ class RTStatsWorker(consumer: ActorRef) extends Actor with ActorLogging with Sta
 
   consumer ! GetSessionMap
 
-  var sessionCount = 0
+  var outstandingTrackers = Set[ActorRef]()
   var requestFieldCounts = Map[String, Long]() withDefaultValue 0L
 
   def receive: Receive = initializing
 
   def initializing: Receive = {
     case SessionMapResponse(sessionMap) =>
+      outstandingTrackers = sessionMap.valuesIterator.toSet
       unstashAll()
       context.become(ready(sessionMap))
     case _ =>
@@ -39,6 +40,7 @@ class RTStatsWorker(consumer: ActorRef) extends Actor with ActorLogging with Sta
   def ready(sessionMap: Map[Long, ActorRef]): Receive = {
     case GetTotalSessionCount =>
       sender ! TotalSessionCount(sessionMap.size)
+      context.stop(self)
 
     case msg @ GetSessionCountPerUrl =>
       val collectingState = CollectingState(sender(), sessionMap, SessionCountPerUrl)
@@ -60,7 +62,11 @@ class RTStatsWorker(consumer: ActorRef) extends Actor with ActorLogging with Sta
   ): Receive = {
     case SessionStats(sessionId, requestHistory) =>
       updateFieldCounts(f, requestHistory)
-      sessionCount += 1
+      outstandingTrackers -= sender
+      checkCollectedCounts(state)
+
+    case Terminated(tracker) =>
+      outstandingTrackers -= sender
       checkCollectedCounts(state)
   }
 
@@ -77,11 +83,12 @@ class RTStatsWorker(consumer: ActorRef) extends Actor with ActorLogging with Sta
 
   def collectSessions(collectingState: CollectingState): Unit = {
     collectingState.sessionMap.valuesIterator.foreach(_ ! GetSessionStats)
+    collectingState.sessionMap.valuesIterator.foreach(context.watch)
     checkCollectedCounts(collectingState)
   }
 
   def checkCollectedCounts(collectingState: CollectingState): Unit = {
-    if (sessionCount >= collectingState.sessionMap.size) {
+    if (outstandingTrackers.isEmpty) {
       collectingState.recipient ! collectingState.responseBuilder(requestFieldCounts)
       context.stop(self)
     }
