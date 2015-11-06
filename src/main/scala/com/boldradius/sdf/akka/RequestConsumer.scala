@@ -1,11 +1,10 @@
 package com.boldradius.sdf.akka
 
 import akka.actor._
-import com.boldradius.sdf.akka.RequestConsumer.{SessionMapResponse, GetSessionMap}
-import com.boldradius.sdf.akka.sim.RequestProducer
-import scala.concurrent.duration._
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
+import com.boldradius.sdf.akka.RequestConsumer.{GetSessionMap, SessionMapResponse}
+import scala.concurrent.duration._
 
 object RequestConsumer {
   def props(settings: ConsumerSettings) = Props(new RequestConsumer(settings))
@@ -51,13 +50,6 @@ class RequestConsumer(val settings: ConsumerSettings) extends Actor with ActorLo
       tracker forward request
 
     case GetSessionMap => sender ! SessionMapResponse(sessionMap)
-
-    case MemberUp(member) =>
-      log.info(s"Received member up${member.address}")
-      log.info(s"Member role is ${member.getRoles.toString}")
-      if (member.hasRole("producer"))
-        log.info("Should now send consumerregistration")
-        context.actorSelection(member.address + "/user/producer") ! RequestProducer.ConsumerRegistration(self)
 
     case Terminated(tracker) =>
       sessionMap.collect { case (id, `tracker`) => id }.foreach(sessionMap -= _)

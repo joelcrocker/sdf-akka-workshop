@@ -2,6 +2,7 @@ package com.boldradius.sdf.akka
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit}
+import com.typesafe.config.ConfigFactory
 import org.scalatest._
 import scala.concurrent.duration._
 import scala.reflect.io.File
@@ -154,7 +155,8 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
 class StatsAggregatorMessageSpec extends TestKit(ActorSystem()) with ImplicitSender
   with WordSpecLike with Matchers with Inspectors with BeforeAndAfterAll
 {
-  val settings = new ConsumerSettings()
+  val config = ConfigFactory.load()
+  val settings = new ConsumerSettings(config)
   override def beforeAll(): Unit = {
     File("target/test-snapshot").deleteRecursively()
   }
