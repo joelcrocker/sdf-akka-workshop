@@ -8,7 +8,7 @@ class RTStatsQuerierSpec extends BaseAkkaSpec {
 
   "Querying for total session count with no trackers" should {
     "return the correct result" in {
-      val consumer = system.actorOf(RequestConsumer.props(new Settings()))
+      val consumer = system.actorOf(RequestConsumer.props(new ConsumerSettings()))
       val client = TestProbe()
 
       val querier = system.actorOf(RTStatsQuerier.props(consumer))
@@ -19,7 +19,7 @@ class RTStatsQuerierSpec extends BaseAkkaSpec {
 
   "Querying for sessions per url with no trackers" should {
     "return the correct result" in {
-      val consumer = system.actorOf(RequestConsumer.props(new Settings()))
+      val consumer = system.actorOf(RequestConsumer.props(new ConsumerSettings()))
       val client = TestProbe()
 
       val querier = system.actorOf(RTStatsQuerier.props(consumer))
@@ -30,7 +30,7 @@ class RTStatsQuerierSpec extends BaseAkkaSpec {
 
   "Querying for sessions per browser with no trackers" should {
     "return the correct result" in {
-      val consumer = system.actorOf(RequestConsumer.props(new Settings()))
+      val consumer = system.actorOf(RequestConsumer.props(new ConsumerSettings()))
       val client = TestProbe()
 
       val querier = system.actorOf(RTStatsQuerier.props(consumer))
