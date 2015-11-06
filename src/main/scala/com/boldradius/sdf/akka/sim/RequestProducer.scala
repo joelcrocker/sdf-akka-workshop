@@ -37,7 +37,7 @@ class RequestProducer(concurrentSessions:Int) extends Actor with ActorLogging {
       checkSessions(target)
       context.system.scheduler.scheduleOnce(checkSessionInterval, self, CheckSessions(target))
 
-    case MemberRemoved(member, _) => {}
+    case MemberRemoved(member, _) =>
       log.info(s"Received member remove for ${member.address}")
       if (member.hasRole("consumer")) {
         log.debug("Stopping simulation")
