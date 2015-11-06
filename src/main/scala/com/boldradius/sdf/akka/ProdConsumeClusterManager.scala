@@ -10,7 +10,7 @@ import scala.concurrent.duration._
 
 object ProdConsumeClusterManager {
 
-  def props(settings: ConsumerSettings) = Props(new RequestConsumer(settings))
+  def props() = Props(new ProdConsumeClusterManager())
 
 }
 
@@ -28,7 +28,7 @@ class ProdConsumeClusterManager extends Actor with ActorLogging {
       log.info(s"Received member up${member.address}")
       if (member.hasRole("producer")) {
         log.info(s"${member.getRoles} up, sending registration to producer")
-        val consumerRef = Await.result(context.actorSelection(member.address + "/user/consumer").resolveOne(), resolveTimeout.duration)
+        val consumerRef = Await.result(context.actorSelection("/user/consumer").resolveOne(), resolveTimeout.duration)
         context.actorSelection(member.address + "/user/producer") ! RequestProducer.ConsumerRegistration(consumerRef)
       } else if (member.hasRole("consumer")) {
         log.info(s"Consumer up")
