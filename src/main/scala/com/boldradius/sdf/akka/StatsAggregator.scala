@@ -34,7 +34,7 @@ object StatsAggregator {
   case object SelfShot
   
   
-  def props(settings: Settings) = Props(new StatsAggregator(settings))
+  def props(settings: ConsumerSettings) = Props(new StatsAggregator(settings))
 
   // Internal state
   case class BrowserStats(requests: Map[String, Long], users: Map[String, Long]) {
@@ -177,7 +177,7 @@ object StatsAggregator {
   )
 }
 
-class StatsAggregator(settings: Settings) extends PersistentActor with ActorLogging {
+class StatsAggregator(settings: ConsumerSettings) extends PersistentActor with ActorLogging {
   import StatsAggregator._
   override def persistenceId: String = self.path.name
 

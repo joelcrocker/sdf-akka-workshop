@@ -6,14 +6,14 @@ package com.boldradius.sdf.akka
 
 import akka.actor.{ActorIdentity, ActorRef, ActorSystem, Identify}
 import akka.testkit.{EventFilter, TestEvent, TestProbe}
+import com.typesafe.config.ConfigFactory
 import org.scalatest.BeforeAndAfterAll
-
-import scala.concurrent.Await
-import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
 abstract class BaseAkkaSpec extends BaseSpec with BeforeAndAfterAll {
 
-  val settings = new Settings()
+  val config = ConfigFactory.load()
+  val settings = new ConsumerSettings(config)
   implicit class TestProbeOps(probe: TestProbe) {
 
     def expectActor(path: String, max: FiniteDuration = probe.remaining): ActorRef = {

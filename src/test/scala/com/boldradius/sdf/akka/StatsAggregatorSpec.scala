@@ -156,7 +156,8 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
 class StatsAggregatorMessageSpec extends TestKit(ActorSystem()) with ImplicitSender
   with WordSpecLike with Matchers with Inspectors with BeforeAndAfterAll
 {
-  val settings = new Settings()
+  val config = ConfigFactory.load()
+  val settings = new ConsumerSettings(config)
   override def beforeAll(): Unit = {
     val config = system.settings.config
     File(config.getString("akka.persistence.journal.leveldb.dir")).deleteRecursively()
@@ -301,7 +302,7 @@ class StatsAggregatorPersistenceSpec extends TestKit(ActorSystem()) with Implici
   def mkAggregatorActor(name: String): ActorRef = {
     system.actorOf(StatsAggregator.props(settings), name)
   }
-  val settings = new Settings(ConfigFactory.parseMap(
+  val settings = new ConsumerSettings(ConfigFactory.parseMap(
     Map("web-stats.stats-aggregator.snapshot-interval" -> "2")
   ).withFallback(ConfigFactory.load()))
   assert(settings.statsAggregator.snapshotInterval == 2)

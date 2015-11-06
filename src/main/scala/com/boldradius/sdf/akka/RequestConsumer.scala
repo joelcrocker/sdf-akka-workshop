@@ -1,17 +1,17 @@
 package com.boldradius.sdf.akka
 
 import akka.actor._
-import com.boldradius.sdf.akka.RequestConsumer.{SessionMapResponse, GetSessionMap}
+import com.boldradius.sdf.akka.RequestConsumer.{GetSessionMap, SessionMapResponse}
 import scala.concurrent.duration._
 
 object RequestConsumer {
-  def props(settings: Settings) = Props(new RequestConsumer(settings))
+  def props(settings: ConsumerSettings) = Props(new RequestConsumer(settings))
 
   case object GetSessionMap
   case class SessionMapResponse(sessionMap: Map[Long, ActorRef])
 }
 
-class RequestConsumer(val settings: Settings) extends Actor with ActorLogging with Stash {
+class RequestConsumer(val settings: ConsumerSettings) extends Actor with ActorLogging with Stash {
   var sessionMap = Map.empty[Long, ActorRef]
   val alerter = context.actorOf(Alerter.props)
   val statsSupervisor = createStatsSupervisor()
@@ -43,6 +43,9 @@ class RequestConsumer(val settings: Settings) extends Actor with ActorLogging wi
 
     case Terminated(tracker) =>
       sessionMap.collect { case (id, `tracker`) => id }.foreach(sessionMap -= _)
+
+    case _ =>
+      log.info("Received unhandled message in RequestConsumer")
   }
 
   def createSessionTracker(id: Long, inactivityDuration: Duration, statsAggregator: ActorRef)

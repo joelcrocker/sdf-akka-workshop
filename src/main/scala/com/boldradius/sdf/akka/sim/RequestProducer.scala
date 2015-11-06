@@ -2,7 +2,6 @@ package com.boldradius.sdf.akka.sim
 
 import akka.actor._
 import com.boldradius.sdf.akka.sim.RequestProducer._
-
 import scala.concurrent.duration._
 
 /**
@@ -19,7 +18,9 @@ class RequestProducer(concurrentSessions:Int) extends Actor with ActorLogging {
   def receive: Receive = stopped
 
   def stopped: Receive = {
-    case Start(target) =>
+    case ConsumerRegistration(target) =>
+
+      log.info(s"Received registration for ${target.path}")
 
       // Move to a different state to avoid sending to more than one target
       context.become(producing)
@@ -33,10 +34,7 @@ class RequestProducer(concurrentSessions:Int) extends Actor with ActorLogging {
       // Check if more sessions need to be created, and schedule the next check
       checkSessions(target)
       context.system.scheduler.scheduleOnce(checkSessionInterval, self, CheckSessions(target))
-
-    case Stop =>
-      log.debug("Stopping simulation")
-      context.become(stopped)
+    //case Stop(target) =>
   }
 
 
@@ -57,7 +55,7 @@ class RequestProducer(concurrentSessions:Int) extends Actor with ActorLogging {
 object RequestProducer {
 
   // Messaging protocol for the RequestProducer
-  case class Start(target: ActorRef)
+  case class ConsumerRegistration(target: ActorRef)
   case object Stop
   case class CheckSessions(target: ActorRef)
 
